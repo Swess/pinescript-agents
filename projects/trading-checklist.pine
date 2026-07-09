@@ -1,3 +1,4 @@
+// built with PineScript Agents by TradersPost
 //@version=6
 indicator(title="Trading Discipline Checklist [TradersPost]", 
      shorttitle="Discipline", 

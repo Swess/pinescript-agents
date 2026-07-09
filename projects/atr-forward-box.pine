@@ -1,3 +1,4 @@
+// built with PineScript Agents by TradersPost
 //@version=6
 indicator("ATR Forward Box",
      shorttitle="ATR FBox",

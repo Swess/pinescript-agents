@@ -30,6 +30,182 @@ Specialized in adding comprehensive testing and validation capabilities to Pine 
 - Statistical significance tests
 - Correlation analysis
 
+## Pine Script v6 2025 Backtesting Features
+
+### Enhanced Reporting (August 2025: 40,960 char strings)
+
+Now possible: comprehensive multi-section reports:
+```pinescript
+// Build detailed performance report (up to 40K chars!)
+var string fullReport = ""
+fullReport := "═══════════════════════════════════════════\n"
+fullReport += "           COMPREHENSIVE BACKTEST REPORT    \n"
+fullReport += "═══════════════════════════════════════════\n\n"
+fullReport += "PERFORMANCE SUMMARY\n"
+fullReport += "───────────────────\n"
+fullReport += "Win Rate: " + str.tostring(winRate, "#.##") + "%\n"
+fullReport += "Profit Factor: " + str.tostring(pf, "#.##") + "\n"
+fullReport += "Sharpe Ratio: " + str.tostring(sharpe, "#.##") + "\n\n"
+fullReport += "TRADE DISTRIBUTION\n"
+fullReport += "───────────────────\n"
+// ... Can include much more detailed analysis
+```
+
+### Use `for...in` for Trade Arrays (March 2025)
+
+The preferred way to iterate over trade data arrays:
+
+```pinescript
+// ✅ BEST: Use for...in for arrays (safe, clean)
+for tradeReturn in tradeReturns
+    // Process each return directly
+
+// ✅ BEST: With index when needed
+for [i, tradeReturn] in tradeReturns
+    // Have both index and value
+
+// ❌ AVOID: Traditional for with dynamic boundary
+for i = 0 to array.size(tradeReturns) - 1
+    array.push(newArray, processedValue)  // Can infinite loop!
+
+// ✅ FALLBACK: If traditional for needed, cache boundary
+arrSize = array.size(tradeReturns)
+for i = 0 to arrSize - 1
+    // Safe processing
+```
+
+### Conditional Backtest Settings (July 2025)
+
+Use `active` parameter to show relevant settings:
+```pinescript
+showAdvancedMetrics = input.bool(false, "Show Advanced Metrics", group="Backtest")
+sharpeRiskFreeRate = input.float(0.02, "Risk-Free Rate",
+    group="Backtest",
+    active=showAdvancedMetrics,  // Only show when advanced enabled
+    tooltip="Annual risk-free rate for Sharpe calculation")
+```
+
+### Visual Line Styles (September 2025)
+
+Differentiate backtest visualization with line styles:
+```pinescript
+// Primary metrics: solid
+plot(strategy.equity, "Equity", color.blue, linestyle=plot.linestyle_solid)
+// Benchmarks: dashed
+plot(benchmarkEquity, "Benchmark", color.gray, linestyle=plot.linestyle_dashed)
+// Projections: dotted
+plot(projectedEquity, "Projected", color.yellow, linestyle=plot.linestyle_dotted)
+```
+
+## ⚠️ UDT-First Trade Tracking
+
+**For comprehensive trade analysis, use UDTs to track individual trades.**
+
+### Trade UDT Pattern
+
+```pinescript
+// Define Trade UDT for detailed tracking
+type Trade
+    // Time coordinates (for historical analysis)
+    int entryTime
+    int exitTime
+    int entryBar
+    int exitBar
+
+    // Trade data
+    float entryPrice
+    float exitPrice
+    float positionSize
+    bool isLong
+    string exitReason
+
+    // Calculated metrics
+    float pnl = 0.0
+    float pnlPercent = 0.0
+    int duration = 0
+
+    // Visualization (optional)
+    line tradeLine = na
+    label entryLabel = na
+    label exitLabel = na
+
+// Methods for trade analysis
+method calculate(Trade this) =>
+    this.duration := this.exitBar - this.entryBar
+    if this.isLong
+        this.pnl := (this.exitPrice - this.entryPrice) * this.positionSize
+        this.pnlPercent := ((this.exitPrice - this.entryPrice) / this.entryPrice) * 100
+    else
+        this.pnl := (this.entryPrice - this.exitPrice) * this.positionSize
+        this.pnlPercent := ((this.entryPrice - this.exitPrice) / this.entryPrice) * 100
+
+method draw(Trade this, color winColor, color loseColor) =>
+    tradeColor = this.pnl >= 0 ? winColor : loseColor
+    // Use xloc.bar_time for unlimited lookback!
+    this.tradeLine := line.new(this.entryTime, this.entryPrice,
+         this.exitTime, this.exitPrice,
+         xloc=xloc.bar_time, color=tradeColor, width=2)
+
+// Storage
+var array<Trade> completedTrades = array.new<Trade>()
+var Trade currentTrade = na
+```
+
+### Trade Analysis with for...in
+
+```pinescript
+// Analyze all trades using for...in
+if barstate.islastconfirmedhistory
+    totalPnl = 0.0
+    wins = 0
+    losses = 0
+    totalDuration = 0
+
+    for trade in completedTrades
+        totalPnl += trade.pnl
+        if trade.pnl >= 0
+            wins += 1
+        else
+            losses += 1
+        totalDuration += trade.duration
+
+    winRate = array.size(completedTrades) > 0 ? (wins / array.size(completedTrades)) * 100 : 0
+    avgDuration = array.size(completedTrades) > 0 ? totalDuration / array.size(completedTrades) : 0
+```
+
+### Trade Distribution with UDT Arrays
+
+```pinescript
+// Categorize trades by exit reason
+var array<Trade> stopLossTrades = array.new<Trade>()
+var array<Trade> takeProfitTrades = array.new<Trade>()
+var array<Trade> timeoutTrades = array.new<Trade>()
+
+// When trade closes, categorize it
+if tradeJustClosed
+    if currentTrade.exitReason == "SL"
+        array.push(stopLossTrades, currentTrade)
+    else if currentTrade.exitReason == "TP"
+        array.push(takeProfitTrades, currentTrade)
+    else
+        array.push(timeoutTrades, currentTrade)
+
+// Analyze by category
+if barstate.islast
+    slCount = array.size(stopLossTrades)
+    tpCount = array.size(takeProfitTrades)
+    // ... display distribution
+```
+
+### Visualize Trade History with xloc.bar_time
+
+```pinescript
+// Draw all historical trades (no 5000 bar limit!)
+if barstate.islast and showTradeHistory
+    for trade in completedTrades
+        trade.draw(color.green, color.red)
+```
+
 ## Backtesting Components
 
 ### 1. Comprehensive Strategy Metrics Table
@@ -228,8 +404,28 @@ maLength = int(optimalParam)
 ma = ta.sma(close, maLength)
 ```
 
+## Strategy Requirements
+
+**CRITICAL: All strategies must include branding and alert annotation:**
+```pinescript
+// built with PineScript Agents by TradersPost
+//@version=6
+strategy("My Strategy", overlay=true)
+//@strategy_alert_message {{strategy.order.alert_message}}
+```
+
+This enables alert messages passed by `alert()` functions and `strategy.order.alert_message` attributes to work with TradingView's native alert system.
+
 ## Testing Checklist
 
+### Architecture (Check First!)
+- [ ] Trade UDT defined for detailed tracking
+- [ ] Time + bar_index stored for each trade
+- [ ] Trade visualization uses xloc.bar_time
+- [ ] for...in used for trade array iteration
+
+### Strategy Requirements
+- [ ] `//@strategy_alert_message` annotation included (after the `strategy()` call)
 - [ ] Net profit/loss calculation
 - [ ] Win rate and trade count
 - [ ] Maximum drawdown tracking

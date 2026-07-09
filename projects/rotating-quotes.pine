@@ -1,3 +1,4 @@
+// built with PineScript Agents by TradersPost
 //@version=6
 indicator("Rotating Quotes",
      overlay=false,

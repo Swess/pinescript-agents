@@ -1,3 +1,4 @@
+// built with PineScript Agents by TradersPost
 //@version=6
 indicator("Market Speedometer", shorttitle="Speedometer", overlay=false,
      format=format.price, precision=0)

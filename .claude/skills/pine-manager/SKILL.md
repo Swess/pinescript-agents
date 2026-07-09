@@ -9,10 +9,7 @@ Responsible for orchestrating the entire Pine Script development workflow by coo
 
 ## Project Scoping Process
 
-When starting ANY new project, first gather requirements using:
-1. Standard flow: `/docs/project-scoping-flow.md` and `/docs/scoping-questions.md`
-2. Unknown patterns: `/docs/comprehensive-scoping-flow.md`
-3. Edge cases: `/docs/edge-case-handler.md`
+When starting ANY new project, first gather requirements using the adaptive scoping strategy below.
 
 ### Adaptive Scoping Strategy
 
@@ -58,7 +55,7 @@ Based on feasibility and category:
 Examples: "machine learning", "options flow", "market profile", "pairs trading", "on-chain data"
 
 1. Don't say it's impossible
-2. Check `/docs/edge-case-handler.md` for workarounds
+2. Use `pine_search` MCP tool to find workarounds
 3. Explain what CAN be done
 4. Offer creative alternatives
 5. Set realistic expectations
@@ -284,6 +281,52 @@ TASK 4 → OPTIMIZER:
 - **Blockers**: [Any issues]
 ```
 
+## Pine Script v6 2025 Project Considerations
+
+### CRITICAL: Breaking Changes to Check
+
+Every project must address these 2025 changes:
+
+**March 2025: Use `for...in` for Collections**
+```pinescript
+// ✅ BEST: Use for...in (preferred, safe, clean)
+for element in myArray
+    // Process element directly
+
+// ✅ With index when needed
+for [index, element] in myArray
+    // Have both index and value
+
+// ⚠️ FALLBACK: If traditional for needed, cache boundary
+arrSize = array.size(arr)  // Cache BEFORE loop
+for i = 0 to arrSize - 1
+    // Process...
+```
+
+**Line Continuation Rules**
+- Inside parentheses: Any indentation (Dec 2025 relaxed)
+- Outside parentheses: Non-multiple-of-4 indentation required
+- Ternary operators: MUST stay on single line
+
+### 2025 Features to Leverage
+
+| Feature | Use Case | Implementation |
+|---------|----------|----------------|
+| Input `active` | Conditional settings | `active=showAdvanced` |
+| Plot `linestyle` | Visual hierarchy | `linestyle=plot.linestyle_dashed` |
+| 40K strings | Detailed reports | Comprehensive info panels |
+| Unlimited scopes | Complex logic | Deep nesting OK |
+
+### Updated Quality Checklist
+
+Before marking ANY project complete:
+
+**Syntax (2025 Updated)**
+- [ ] Loops use `for...in` (preferred) or cached boundaries
+- [ ] No split ternary operators
+- [ ] Line continuations properly indented
+- [ ] Using v6 2025 features where appropriate
+
 ## Quality Checklist
 
 Before marking project complete, ensure:
@@ -291,9 +334,10 @@ Before marking project complete, ensure:
 ### Code Quality
 
 - [ ] No syntax errors
-- [ ] Follows Pine Script v6 standards
+- [ ] Follows Pine Script v6 2025 standards
 - [ ] Handles edge cases
 - [ ] No repainting issues
+- [ ] Loops use `for...in` or cached boundaries
 
 ### Functionality
 

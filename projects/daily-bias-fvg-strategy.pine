@@ -1,8 +1,9 @@
+// built with PineScript Agents by TradersPost
 // This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © Based on "The Ultimate Daily Bias Trading Strategy" by Lewis Kelly
-// Implemented by Pine Script Development Assistant
 
 //@version=6
+//@strategy_alert_message {{strategy.order.alert_message}}
 strategy("Daily Bias + FVG Strategy", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=2, commission_type=strategy.commission.percent, commission_value=0.1, slippage=1)
 
 // ============================================================================

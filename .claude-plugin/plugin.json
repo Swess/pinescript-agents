@@ -1,0 +1,20 @@
+{
+  "name": "pinescript",
+  "description": "Professional Pine Script v6 development assistant for TradingView indicators and strategies. Features guided workflows for beginners, YouTube video analysis, comprehensive templates, and specialized development tools.",
+  "version": "2.0.0",
+  "author": {
+    "name": "TradersPost"
+  },
+  "repository": "https://github.com/TradersPost/pinescript-agents",
+  "homepage": "https://github.com/TradersPost/pinescript-agents",
+  "license": "MIT",
+  "keywords": [
+    "pine-script",
+    "tradingview",
+    "trading",
+    "indicators",
+    "strategies",
+    "technical-analysis",
+    "algorithmic-trading"
+  ]
+}

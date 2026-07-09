@@ -1,0 +1,25 @@
+{
+  "name": "pinescript-mcp-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "scrape-guide": "tsx scripts/scrape-guide.ts",
+    "download-manual": "bash scripts/download-manual.sh",
+    "download-reference": "bash scripts/download-reference-json.sh",
+    "update-docs": "npm run download-manual && npm run download-reference && npm run scrape-guide"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "cheerio": "^1.0.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.2",
+    "vitest": "^3.1.1"
+  }
+}

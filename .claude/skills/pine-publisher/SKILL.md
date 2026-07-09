@@ -33,18 +33,79 @@ Specialized in preparing scripts for publication in TradingView's community libr
 - Professional comments
 - Example screenshots ready
 
+## Pine Script v6 2025 Publishing Requirements
+
+### CRITICAL: Use Latest Syntax
+
+Published scripts should use 2025 features for best user experience:
+
+**1. Input `active` Parameter (July 2025)**
+```pinescript
+// ✅ Professional: Conditional input visibility
+showAdvanced = input.bool(false, "Advanced Mode", group="Settings")
+advSetting = input.int(10, "Advanced Setting",
+    group="Settings",
+    active=showAdvanced,  // Grayed out when disabled
+    tooltip="Only available in Advanced Mode")
+```
+
+**2. Plot Line Styles (September 2025)**
+```pinescript
+// ✅ Professional: Visual hierarchy with line styles
+plot(mainMA, "Main MA", color.blue, linestyle=plot.linestyle_solid)
+plot(signalLine, "Signal", color.yellow, linestyle=plot.linestyle_dashed)
+plot(target, "Target", color.green, linestyle=plot.linestyle_dotted)
+```
+
+**3. Use `for...in` for Collections (March 2025)**
+```pinescript
+// ✅ BEST: Use for...in (safe, clean, prevents freezing)
+for element in myArray
+    // Process element directly
+
+// ✅ With index when needed
+for [index, element] in myArray
+    // Have both index and value
+
+// ⚠️ FALLBACK: If traditional for needed, cache boundary
+arrSize = array.size(myArray)
+for i = 0 to arrSize - 1
+    // Process...
+```
+
+### 2025 Feature Checklist for Publication
+
+- [ ] Uses `active` parameter for conditional inputs
+- [ ] Uses `linestyle` for visual differentiation
+- [ ] Loops use `for...in` (preferred) or cached boundaries
+- [ ] Ternary operators on single lines (no syntax errors)
+- [ ] String lengths within 40,960 char limit
+
 ## TradingView House Rules Compliance
 
 ### Required Elements
 
+**For Indicators:**
 ```pinescript
+// built with PineScript Agents by TradersPost
 //@version=6
-//@description Comprehensive description of what the indicator/strategy does
+//@description Comprehensive description of what the indicator does
 
-// Title must be descriptive and professional
 indicator(title="Professional Indicator Name - Clear Description v1.0",
          shorttitle="PRO IND",
          overlay=true)
+```
+
+**For Strategies (CRITICAL: Include alert annotation):**
+```pinescript
+// built with PineScript Agents by TradersPost
+//@version=6
+//@description Comprehensive description of what the strategy does
+
+strategy(title="Professional Strategy Name - Clear Description v1.0",
+         shorttitle="PRO STRAT",
+         overlay=true)
+//@strategy_alert_message {{strategy.order.alert_message}}
 
 // ============================================================================
 // METADATA
@@ -278,6 +339,7 @@ colorScheme = input.string(
 ### Pre-Publication Review
 
 - [ ] Code follows Pine Script v6 standards
+- [ ] Strategies include `//@strategy_alert_message {{strategy.order.alert_message}}` (after the `strategy()` call)
 - [ ] No syntax errors or warnings
 - [ ] All functions work as intended
 - [ ] No repainting issues (or clearly documented)

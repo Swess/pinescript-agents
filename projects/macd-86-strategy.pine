@@ -1,4 +1,6 @@
+// built with PineScript Agents by TradersPost
 //@version=6
+//@strategy_alert_message {{strategy.order.alert_message}}
 strategy("MACD 86% Win Rate Strategy", 
      shorttitle="MACD86",
      overlay=true,

@@ -144,6 +144,17 @@ downtrendColor = input.color(#ef5350,
      tooltip="Base color for downtrend (negative slope) regression channels",
      group="Visual Settings")
 
+showEntryRegressions = input.bool(true,
+     "Show Entry Regressions",
+     tooltip="Draw the regression channel that triggered each trade entry.\n" +
+             "This shows exactly what the strategy 'saw' when it entered.",
+     group="Visual Settings")
+
+entryRegressionColor = input.color(#ff9800,
+     "Entry Regression Color",
+     tooltip="Color for regressions that triggered trade entries (orange by default)",
+     group="Visual Settings")
+
 fillTransparency = input.int(93,
      "Fill Transparency",
      minval=0,
@@ -396,6 +407,13 @@ var Regression liveRegression = na
 // The original regression (first one, never removed)
 var Regression originalRegression = na
 
+// The current static regression (most recent locked one being drawn)
+var Regression currentStaticRegression = na
+
+// Array of regressions that triggered trade entries (for visualization)
+// These are "snapshots" of what the strategy saw when it entered
+var array<Regression> entryRegressions = array.new<Regression>()
+
 // Collect data points for ORIGINAL regression (only within time range)
 if isInRange(time, startTime, endTime)
     if na(origFirstBarIndex)
@@ -445,6 +463,11 @@ if origRangeSize >= 2 and not origCalculated
             currentStaticFirstTime := origFirstTime
             currentStaticLastTime := origLastTime
             currentStaticPearsonR := origPearsonR
+            // DEBUG: Log original regression initialization
+            log.info("=== ORIGINAL REGRESSION INITIALIZED ===")
+            log.info("origSlope: {0}", origSlope)
+            log.info("origFirstBarIndex: {0}, origLastBarIndex: {1}", origFirstBarIndex, origLastBarIndex)
+            log.info("origIntercept: {0}, origStdDev: {1}", origIntercept, origStdDev)
 
         // Create the original regression UDT (first time only)
         if na(originalRegression)
@@ -499,6 +522,13 @@ if origCalculated and showLive and not na(currentStaticSlope) and not na(current
             currentStaticLastTime := lockEndTime
             currentStaticPearsonR := livePearsonR[1]  // Use previous R (when it was still valid)
             chainCount := chainCount + 1
+
+            // DEBUG: Log chain creation
+            log.info("=== NEW CHAIN CREATED ===")
+            log.info("chainCount now: {0}", chainCount)
+            log.info("NEW currentStaticSlope: {0}", currentStaticSlope)
+            log.info("NEW currentStaticFirstBar: {0}, currentStaticLastBar: {1}", currentStaticFirstBar, currentStaticLastBar)
+            log.info("NEW currentStaticIntercept: {0}, currentStaticStdDev: {1}", currentStaticIntercept, currentStaticStdDev)
 
             // Reset dynamic state for next breakout
             breakoutConfirmed := false
@@ -620,6 +650,17 @@ if origCalculated and showLive and not na(currentStaticSlope) and not na(current
                 isDynamicActive := true
                 // Set breakout bar to the first bar of the breakout sequence
                 breakoutBarIndex := bar_index - breakoutConfirmation + 1
+
+                // DEBUG: Log breakout detection values
+                log.info("=== BREAKOUT DETECTED ===")
+                log.info("Bar: {0}, Close: {1}", bar_index, close)
+                log.info("currentStaticSlope: {0}", currentStaticSlope)
+                log.info("staticCurrentY: {0}", staticCurrentY)
+                log.info("staticUpperAtBar: {0}, staticLowerAtBar: {1}", staticUpperAtBar, staticLowerAtBar)
+                log.info("currentStaticFirstBar: {0}, currentStaticLastBar: {1}", currentStaticFirstBar, currentStaticLastBar)
+                log.info("currentStaticIntercept: {0}, currentStaticStdDev: {1}", currentStaticIntercept, currentStaticStdDev)
+                log.info("Breakout type: {0}", currentStaticSlope < 0 ? "LONG (break above)" : "SHORT (break below)")
+                log.info("chainCount at breakout: {0}", chainCount)
         else
             // Reset consecutive counter if no breakout
             consecutiveBreakoutBars := 0
@@ -705,6 +746,32 @@ if newBreakout and not na(currentStaticSlope)
 
 // Execute strategy orders
 if enableStrategy and newBreakout
+    // DEBUG: Log entry capture values
+    log.info("=== ENTRY REGRESSION CAPTURE ===")
+    log.info("Bar: {0}, Close: {1}", bar_index, close)
+    log.info("currentStaticSlope: {0}", currentStaticSlope)
+    log.info("currentStaticFirstBar: {0}, currentStaticLastBar: {1}", currentStaticFirstBar, currentStaticLastBar)
+    log.info("currentStaticIntercept: {0}, currentStaticStdDev: {1}", currentStaticIntercept, currentStaticStdDev)
+    log.info("lastBreakoutDirection: {0}", lastBreakoutDirection)
+
+    // Capture the regression that triggered this entry (snapshot)
+    // IMPORTANT: Extend the regression to the BREAKOUT BAR (current bar) so we can see
+    // the actual channel boundary that was broken, not just the original range
+    if showEntryRegressions and not na(currentStaticSlope) and not na(currentStaticFirstTime)
+        entryReg = Regression.new(
+             startTime = currentStaticFirstTime,
+             endTime = time,  // Use CURRENT time (breakout bar), not original end
+             startBarIndex = currentStaticFirstBar,
+             endBarIndex = bar_index,  // Use CURRENT bar (breakout bar), not original end
+             slope = currentStaticSlope,
+             intercept = currentStaticIntercept,
+             stdDev = currentStaticStdDev,
+             pearsonR = currentStaticPearsonR,
+             isLive = false,
+             isOriginal = false)
+        array.push(entryRegressions, entryReg)
+        log.info("Entry regression captured - slope: {0}, firstBar: {1}, EXTENDED to bar: {2}", currentStaticSlope, currentStaticFirstBar, bar_index)
+
     if lastBreakoutDirection == 1
         // LONG entry - close any existing short first
         if strategy.position_size < 0
@@ -743,6 +810,10 @@ if shouldRedraw
     for reg in regressions
         reg.delete()
 
+    // Delete current static regression drawings
+    if not na(currentStaticRegression)
+        currentStaticRegression.delete()
+
     // Delete live regression drawings
     if not na(liveRegression)
         liveRegression.delete()
@@ -759,17 +830,37 @@ if showStatic and shouldRedraw and array.size(regressions) > 0
         reg.draw(baseColor, lineWidth, upperDeviation, lowerDeviation, fillTransparency, showUpperChannel, showLowerChannel)
 
 // Draw CURRENT STATIC regression (the most recent locked regression)
-// This draws using the old variables temporarily until we can fully migrate
+// Use persistent variable to avoid orphaned drawing objects
 if showStatic and shouldRedraw and chainCount > 0 and not na(currentStaticSlope) and not na(currentStaticFirstTime)
-    // Create a temporary Regression for drawing
-    csReg = Regression.new(startTime=currentStaticFirstTime, endTime=currentStaticLastTime, startBarIndex=currentStaticFirstBar, endBarIndex=currentStaticLastBar, slope=currentStaticSlope, intercept=currentStaticIntercept, stdDev=currentStaticStdDev, pearsonR=currentStaticPearsonR, isLive=false, isOriginal=false)
-    baseColor = csReg.slope >= 0 ? uptrendColor : downtrendColor
-    csReg.draw(baseColor, lineWidth, upperDeviation, lowerDeviation, fillTransparency, showUpperChannel, showLowerChannel)
+    // Update persistent Regression UDT (create if na, update if exists)
+    if na(currentStaticRegression)
+        currentStaticRegression := Regression.new(startTime=currentStaticFirstTime, endTime=currentStaticLastTime, startBarIndex=currentStaticFirstBar, endBarIndex=currentStaticLastBar, slope=currentStaticSlope, intercept=currentStaticIntercept, stdDev=currentStaticStdDev, pearsonR=currentStaticPearsonR, isLive=false, isOriginal=false)
+    else
+        currentStaticRegression.startTime := currentStaticFirstTime
+        currentStaticRegression.endTime := currentStaticLastTime
+        currentStaticRegression.startBarIndex := currentStaticFirstBar
+        currentStaticRegression.endBarIndex := currentStaticLastBar
+        currentStaticRegression.slope := currentStaticSlope
+        currentStaticRegression.intercept := currentStaticIntercept
+        currentStaticRegression.stdDev := currentStaticStdDev
+        currentStaticRegression.pearsonR := currentStaticPearsonR
+    baseColor = currentStaticRegression.slope >= 0 ? uptrendColor : downtrendColor
+    currentStaticRegression.draw(baseColor, lineWidth, upperDeviation, lowerDeviation, fillTransparency, showUpperChannel, showLowerChannel)
 
 // Draw LIVE regression using UDT method
 if showLive and isDynamicActive and not na(liveRegression) and shouldRedraw
     baseColor = liveRegression.slope >= 0 ? uptrendColor : downtrendColor
     liveRegression.draw(baseColor, lineWidth, upperDeviation, lowerDeviation, fillTransparency, showUpperChannel, showLowerChannel)
+
+// Draw ENTRY REGRESSIONS - snapshots of what triggered each trade
+// These are drawn in a distinct color so you can see exactly what the strategy reacted to
+if showEntryRegressions and shouldRedraw and array.size(entryRegressions) > 0
+    // Delete old drawings first to prevent stacking
+    for entryReg in entryRegressions
+        entryReg.delete()
+    // Redraw all entry regressions in the entry color
+    for entryReg in entryRegressions
+        entryReg.draw(entryRegressionColor, lineWidth + 1, upperDeviation, lowerDeviation, fillTransparency - 10, showUpperChannel, showLowerChannel)
 
 
 // ============================================================================
