@@ -24,7 +24,7 @@
 // toggles let you demand the strong variant per side to match either reading.
 // ===========================================================================
 
-strategy("Q-Trend + KVO Strategy",
+strategy("[TradersPost] Q-Trend + KVO Strategy",
      shorttitle="QTrend+KVO",
      overlay=false,
      default_qty_type=strategy.fixed,
