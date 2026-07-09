@@ -8,8 +8,10 @@
 //   • Q-Trend           — © tarasenko_  (ATR-banded trend/breakout signals)
 //   • Klinger Volume Osc — © Alex Orekhov (everget) (volume-force momentum)
 //
-// Both indicators are ported inline to Pine v6. Video's presets are the
-// defaults: Q-Trend ATR 40 / EMA smoother 10, KVO fast 29 / signal 16.
+// Both indicators are ported inline to Pine v6. Defaults follow the video's
+// presets (Q-Trend ATR 40, KVO fast 29 / signal 16) except EMA source
+// smoothing, which is OFF by default (the Q-Trend original default; period 10
+// applies only when you enable it).
 //
 // ENTRY (all conditions on the same bar):
 //   LONG  : Q-Trend BUY signal  + KVO green area (kvo > 0) + bullish candle
@@ -24,7 +26,7 @@
 
 strategy("Q-Trend + KVO Strategy",
      shorttitle="QTrend+KVO",
-     overlay=true,
+     overlay=false,
      default_qty_type=strategy.fixed,
      default_qty_value=1,
      pyramiding=0,
@@ -58,7 +60,7 @@ qtMult      = input.float(1.0, "ATR Multiplier", step=0.1,
 qtMode      = input.string("Type A", "Signal Mode", options=["Type A", "Type B"],
      tooltip="Type A uses crossover/crossunder; Type B uses cross (either direction).",
      group=qtGroup)
-qtUseEma    = input.bool(true, "Smooth Source with EMA?",
+qtUseEma    = input.bool(false, "Smooth Source with EMA?",
      tooltip="Video enables EMA smoothing on the source. Turn off for the indicator's original default.",
      group=qtGroup)
 qtEmaPeriod = input.int(10, "EMA Smoother Period",
@@ -115,7 +117,7 @@ showTrendLine = input.bool(true, "Show Q-Trend line", group=visGroup)
 showSignals   = input.bool(true, "Show entry signals", group=visGroup)
 colorBars     = input.bool(false, "Color bars by Q-Trend", group=visGroup)
 showKvoBg     = input.bool(false, "Tint background by KVO area", group=visGroup)
-showTable     = input.bool(true, "Show performance table", group=visGroup)
+showKvo       = input.bool(true, "Show KVO oscillator (this pane)", group=visGroup)
 longColor  = input.color(color.new(#26a69a, 0), "Long / TP color",  group=visGroup, inline="col")
 shortColor = input.color(color.new(#ef5350, 0), "Short / SL color", group=visGroup, inline="col")
 
@@ -219,9 +221,12 @@ sellMsg  = "{\"ticker\":\"" + tpTicker + "\",\"action\":\"sell\",\"sentiment\":\
 exitLong  = "{\"ticker\":\"" + tpTicker + "\",\"action\":\"sell\",\"sentiment\":\"flat\"}"
 exitShort = "{\"ticker\":\"" + tpTicker + "\",\"action\":\"buy\",\"sentiment\":\"flat\"}"
 
+// Swing levels computed every bar (ta.* must run each bar for consistent history)
+swingLow  = ta.lowest(low, slLookback)
+swingHigh = ta.highest(high, slLookback)
+
 // --- Entries (only when flat) ---
 if longSignal and strategy.position_size == 0
-    swingLow = ta.lowest(low, slLookback)
     risk = close - swingLow
     if risk > 0
         longStop := swingLow
@@ -229,7 +234,6 @@ if longSignal and strategy.position_size == 0
         strategy.entry("Long", strategy.long, comment="QTrend+KVO Long", alert_message=buyMsg)
 
 if shortSignal and strategy.position_size == 0
-    swingHigh = ta.highest(high, slLookback)
     risk = swingHigh - close
     if risk > 0
         shortStop := swingHigh
@@ -249,30 +253,37 @@ if strategy.position_size < 0 and not na(shortStop)
 
 trendCol = ls == "B" ? longColor : shortColor
 
-plot(showTrendLine ? m : na, "Q-Trend Line", color=trendCol, linewidth=2)
+// --- Main-chart layer (force_overlay so it renders on price, not this pane) --
+plot(showTrendLine ? m : na, "Q-Trend Line", color=trendCol, linewidth=2, force_overlay=true)
 
 plotshape(showSignals and longSignal,
      title="Long Signal", location=location.belowbar, style=shape.labelup,
-     size=size.small, color=longColor, textcolor=color.white, text="BUY")
+     size=size.small, color=longColor, textcolor=color.white, text="BUY", force_overlay=true)
 
 plotshape(showSignals and shortSignal,
      title="Short Signal", location=location.abovebar, style=shape.labeldown,
-     size=size.small, color=shortColor, textcolor=color.white, text="SELL")
+     size=size.small, color=shortColor, textcolor=color.white, text="SELL", force_overlay=true)
 
 // Active-trade risk levels (SL red-ish, TP green-ish, thin)
 plot(strategy.position_size > 0 ? longStop : na, "Long Stop",
-     color=shortColor, style=plot.style_linebr, linewidth=1)
+     color=shortColor, style=plot.style_linebr, linewidth=1, force_overlay=true)
 plot(strategy.position_size > 0 ? longTP : na, "Long Target",
-     color=longColor, style=plot.style_linebr, linewidth=1)
+     color=longColor, style=plot.style_linebr, linewidth=1, force_overlay=true)
 plot(strategy.position_size < 0 ? shortStop : na, "Short Stop",
-     color=shortColor, style=plot.style_linebr, linewidth=1)
+     color=shortColor, style=plot.style_linebr, linewidth=1, force_overlay=true)
 plot(strategy.position_size < 0 ? shortTP : na, "Short Target",
-     color=longColor, style=plot.style_linebr, linewidth=1)
+     color=longColor, style=plot.style_linebr, linewidth=1, force_overlay=true)
 
 barcolor(colorBars ? trendCol : na, title="Bar Color")
 
 bgcolor(showKvoBg ? (kvoGreen ? color.new(longColor, 92) : kvoRed ? color.new(shortColor, 92) : na) : na,
-     title="KVO Area Background")
+     title="KVO Area Background", force_overlay=true)
+
+// --- KVO oscillator layer (stays in this pane) -------------------------------
+kvoCol = kvoGreen ? longColor : shortColor
+plot(showKvo ? kvo : na, "KVO", color=color.new(kvoCol, 20), style=plot.style_area, linewidth=1)
+plot(showKvo ? kvSignal : na, "KVO Signal", color=color.new(color.gray, 0), linewidth=1)
+hline(0, "KVO Zero", color=color.new(color.gray, 60), linestyle=hline.style_dotted)
 
 // ===========================================================================
 // ALERTS (indicator-style, in addition to order alert_message)
@@ -280,43 +291,3 @@ bgcolor(showKvoBg ? (kvoGreen ? color.new(longColor, 92) : kvoRed ? color.new(sh
 
 alertcondition(longSignal,  title="Q-Trend+KVO LONG",  message="Long confluence: Q-Trend buy + KVO green + bullish candle")
 alertcondition(shortSignal, title="Q-Trend+KVO SHORT", message="Short confluence: Q-Trend sell + KVO red + bearish candle")
-
-// ===========================================================================
-// PERFORMANCE TABLE
-// ===========================================================================
-
-var table perf = table.new(position.top_right, 2, 8,
-     bgcolor=color.new(color.black, 80), border_width=1, border_color=color.new(color.gray, 60))
-
-if showTable and barstate.islast
-    txt = color.new(color.white, 0)
-    table.cell(perf, 0, 0, "Metric", text_color=txt, text_size=size.small, bgcolor=color.new(color.gray, 50))
-    table.cell(perf, 1, 0, "Value",  text_color=txt, text_size=size.small, bgcolor=color.new(color.gray, 50))
-
-    table.cell(perf, 0, 1, "Net Profit", text_color=txt, text_size=size.small)
-    table.cell(perf, 1, 1, str.tostring(strategy.netprofit, "#.##"),
-         text_color=strategy.netprofit >= 0 ? longColor : shortColor, text_size=size.small)
-
-    table.cell(perf, 0, 2, "Total Trades", text_color=txt, text_size=size.small)
-    table.cell(perf, 1, 2, str.tostring(strategy.closedtrades), text_color=txt, text_size=size.small)
-
-    winRate = strategy.closedtrades > 0 ? (strategy.wintrades / strategy.closedtrades) * 100 : 0
-    table.cell(perf, 0, 3, "Win Rate", text_color=txt, text_size=size.small)
-    table.cell(perf, 1, 3, str.tostring(winRate, "#.##") + "%",
-         text_color=winRate >= 50 ? longColor : shortColor, text_size=size.small)
-
-    pf = strategy.grossloss > 0 ? strategy.grossprofit / strategy.grossloss : na
-    table.cell(perf, 0, 4, "Profit Factor", text_color=txt, text_size=size.small)
-    table.cell(perf, 1, 4, na(pf) ? "n/a" : str.tostring(pf, "#.##"),
-         text_color=na(pf) or pf >= 1 ? longColor : shortColor, text_size=size.small)
-
-    table.cell(perf, 0, 5, "Max Drawdown", text_color=txt, text_size=size.small)
-    table.cell(perf, 1, 5, str.tostring(strategy.max_drawdown, "#.##"), text_color=shortColor, text_size=size.small)
-
-    avgWin = strategy.wintrades > 0 ? strategy.grossprofit / strategy.wintrades : 0
-    table.cell(perf, 0, 6, "Avg Win", text_color=txt, text_size=size.small)
-    table.cell(perf, 1, 6, str.tostring(avgWin, "#.##"), text_color=longColor, text_size=size.small)
-
-    avgLoss = strategy.losstrades > 0 ? strategy.grossloss / strategy.losstrades : 0
-    table.cell(perf, 0, 7, "Avg Loss", text_color=txt, text_size=size.small)
-    table.cell(perf, 1, 7, str.tostring(avgLoss, "#.##"), text_color=shortColor, text_size=size.small)

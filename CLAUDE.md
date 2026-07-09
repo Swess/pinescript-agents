@@ -78,6 +78,7 @@ For complex data, define User Defined Types before calculations:
 5. **Cache Loop Boundaries**: Store `array.size()` before loops (2025 breaking change)
 6. **Group Inputs**: Use `group=` parameter for organized settings
 7. **Add Tooltips**: Help users understand each input
+8. **No Unrequested Chrome**: Do NOT add performance/stats tables or other decorative panels by default. Ship the core logic + requested visuals only; offer extras as a follow-up.
 
 ## Video Analysis
 
@@ -114,6 +115,15 @@ Use the `pinescript` MCP server tools for documentation lookup:
 Local docs are also available at:
 - `docs/manual/` - Complete Pine Script v6 reference
 - `docs/docs/` - User guide (concepts, language, FAQ, errors)
+
+## Error Log (consult + append)
+
+`docs/pine-error-log.md` is a running repository of real compilation errors, warnings,
+and non-obvious techniques hit in this project. **Check it before writing plots/panes/
+strategy declarations, and append a new entry whenever you resolve a compiler error or
+gotcha** so the same mistake is never repeated. (E.g. it records that `barcolor()` has
+no `force_overlay` arg, and how to combine a chart overlay + a pane oscillator in one
+script.)
 
 ## Quality Checklist
 
