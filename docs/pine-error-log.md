@@ -139,4 +139,20 @@ if entrySignal
 
 ---
 
-_Last updated: 2026-07-09 — seeded from the Q-Trend + KVO strategy build._
+### Invisible Unicode homoglyph in an identifier → "Undeclared identifier"
+
+**Seen:** a group-name variable written `grpТime` compiled as an undeclared/other
+identifier because the "Т" was Cyrillic U+0422, not Latin "T" — indistinguishable by eye.
+
+**Why:** Pine identifiers are case- and byte-sensitive. A homoglyph (Cyrillic а/е/o/Т,
+Greek, full-width) reads identically to a human but is a different symbol, so a later
+reference to the "same" name is actually a different (undeclared) identifier — or, if
+used consistently, silently non-ASCII and fragile.
+
+**Fix:** Keep identifiers strict ASCII. To catch these, grep for non-ASCII outside
+comments/strings: `grep -nP "[^\x00-\x7F]"` then eyeball hits that live in code, not
+in `©`/`™`/em-dash/emoji.
+
+---
+
+_Last updated: 2026-07-23 — added homoglyph gotcha from the ICT Silver Bullet indicator build._
