@@ -1,0 +1,1460 @@
+# Generated work-list: source URL -> spec file. status: pending|done|skipped
+patterns:
+  - id: 1-2-3-trend-change
+    name: "1-2-3 trend change"
+    url: https://thepatternsite.com/123tc.html
+    category: chart-pattern
+    file: chart-patterns/1-2-3-trend-change.md
+    status: pending
+  - id: 2b
+    name: "2B"
+    url: https://thepatternsite.com/2B.html
+    category: chart-pattern
+    file: chart-patterns/2b.md
+    status: pending
+  - id: 3-falling-peaks
+    name: "3 falling peaks"
+    url: https://thepatternsite.com/3fp.html
+    category: chart-pattern
+    file: chart-patterns/3-falling-peaks.md
+    status: pending
+  - id: 3-rising-valleys
+    name: "3 rising valleys"
+    url: https://thepatternsite.com/3rv.html
+    category: chart-pattern
+    file: chart-patterns/3-rising-valleys.md
+    status: pending
+  - id: 3-peaks-and-domed-house
+    name: "3 peaks and domed house"
+    url: https://thepatternsite.com/3peaksdome.html
+    category: chart-pattern
+    file: chart-patterns/3-peaks-and-domed-house.md
+    status: pending
+  - id: 3-peaks-and-spike
+    name: "3-peaks and spike"
+    url: https://thepatternsite.com/MultiPeak2B.html
+    category: chart-pattern
+    file: chart-patterns/3-peaks-and-spike.md
+    status: pending
+  - id: multi-peaks
+    name: "Multi-peaks."
+    url: https://thepatternsite.com/MultiPeaks.html
+    category: chart-pattern
+    file: chart-patterns/multi-peaks.md
+    status: pending
+  - id: simple-abc-correction
+    name: "Simple ABC correction"
+    url: https://thepatternsite.com/abc.html
+    category: chart-pattern
+    file: chart-patterns/simple-abc-correction.md
+    status: pending
+  - id: double-bottom-adam-adam
+    name: "Double Bottom, Adam & Adam"
+    url: https://thepatternsite.com/aadb.html
+    category: chart-pattern
+    file: chart-patterns/double-bottom-adam-adam.md
+    status: done
+  - id: double-top-adam-adam
+    name: "Double Top, Adam & Adam"
+    url: https://thepatternsite.com/aadt.html
+    category: chart-pattern
+    file: chart-patterns/double-top-adam-adam.md
+    status: pending
+  - id: double-bottom-adam-eve
+    name: "Double Bottom, Adam & Eve"
+    url: https://thepatternsite.com/aedb.html
+    category: chart-pattern
+    file: chart-patterns/double-bottom-adam-eve.md
+    status: pending
+  - id: double-top-adam-eve
+    name: "Double Top, Adam & Eve"
+    url: https://thepatternsite.com/aedt.html
+    category: chart-pattern
+    file: chart-patterns/double-top-adam-eve.md
+    status: pending
+  - id: double-bottom-eve-adam
+    name: "Double Bottom, Eve & Adam"
+    url: https://thepatternsite.com/eadb.html
+    category: chart-pattern
+    file: chart-patterns/double-bottom-eve-adam.md
+    status: pending
+  - id: double-top-eve-adam
+    name: "Double Top, Eve & Adam"
+    url: https://thepatternsite.com/eadt.html
+    category: chart-pattern
+    file: chart-patterns/double-top-eve-adam.md
+    status: pending
+  - id: double-bottom-eve-eve
+    name: "Double Bottom, Eve & Eve"
+    url: https://thepatternsite.com/eedb.html
+    category: chart-pattern
+    file: chart-patterns/double-bottom-eve-eve.md
+    status: pending
+  - id: double-top-eve-eve
+    name: "Double Top, Eve & Eve"
+    url: https://thepatternsite.com/eedt.html
+    category: chart-pattern
+    file: chart-patterns/double-top-eve-eve.md
+    status: pending
+  - id: ugly-double-bottoms
+    name: "Ugly double bottoms"
+    url: https://thepatternsite.com/udb.html
+    category: chart-pattern
+    file: chart-patterns/ugly-double-bottoms.md
+    status: pending
+  - id: gaps
+    name: "Gaps"
+    url: https://thepatternsite.com/gaps.html
+    category: chart-pattern
+    file: chart-patterns/gaps.md
+    status: pending
+  - id: ascending-and-inverted-scallops
+    name: "Ascending and inverted scallops"
+    url: https://thepatternsite.com/aiscallop.html
+    category: chart-pattern
+    file: chart-patterns/ascending-and-inverted-scallops.md
+    status: pending
+  - id: ascending-scallops
+    name: "Ascending scallops"
+    url: https://thepatternsite.com/ascscallop.html
+    category: chart-pattern
+    file: chart-patterns/ascending-scallops.md
+    status: pending
+  - id: descending-scallops
+    name: "Descending scallops"
+    url: https://thepatternsite.com/descscallops.html
+    category: chart-pattern
+    file: chart-patterns/descending-scallops.md
+    status: pending
+  - id: descending-and-inverted-scallops
+    name: "Descending and inverted scallops"
+    url: https://thepatternsite.com/idscallops.html
+    category: chart-pattern
+    file: chart-patterns/descending-and-inverted-scallops.md
+    status: pending
+  - id: ascending-broadening-wedge
+    name: "Ascending broadening wedge"
+    url: https://thepatternsite.com/abw.html
+    category: chart-pattern
+    file: chart-patterns/ascending-broadening-wedge.md
+    status: pending
+  - id: broadening-wedge-descending
+    name: "Broadening wedge, descending"
+    url: https://thepatternsite.com/dbw.html
+    category: chart-pattern
+    file: chart-patterns/broadening-wedge-descending.md
+    status: pending
+  - id: broadening-bottoms
+    name: "Broadening bottoms"
+    url: https://thepatternsite.com/broadb.html
+    category: chart-pattern
+    file: chart-patterns/broadening-bottoms.md
+    status: pending
+  - id: broadening-tops
+    name: "Broadening tops"
+    url: https://thepatternsite.com/bt.html
+    category: chart-pattern
+    file: chart-patterns/broadening-tops.md
+    status: pending
+  - id: right-angled-and-ascending-broadening-formations
+    name: "Right-angled and ascending broadening formations"
+    url: https://thepatternsite.com/rabfa.html
+    category: chart-pattern
+    file: chart-patterns/right-angled-and-ascending-broadening-formations.md
+    status: pending
+  - id: right-angled-and-descending-broadening-formations
+    name: "Right-angled and descending broadening formations"
+    url: https://thepatternsite.com/rabfd.html
+    category: chart-pattern
+    file: chart-patterns/right-angled-and-descending-broadening-formations.md
+    status: pending
+  - id: ascending-triangles
+    name: "Ascending triangles"
+    url: https://thepatternsite.com/at.html
+    category: chart-pattern
+    file: chart-patterns/ascending-triangles.md
+    status: pending
+  - id: descending-triangles
+    name: "Descending triangles"
+    url: https://thepatternsite.com/dt.html
+    category: chart-pattern
+    file: chart-patterns/descending-triangles.md
+    status: pending
+  - id: symmetrical-triangles
+    name: "Symmetrical triangles"
+    url: https://thepatternsite.com/st.html
+    category: chart-pattern
+    file: chart-patterns/symmetrical-triangles.md
+    status: pending
+  - id: bump-and-run-reversal-bottoms
+    name: "Bump-and-run reversal bottoms"
+    url: https://thepatternsite.com/barrb.html
+    category: chart-pattern
+    file: chart-patterns/bump-and-run-reversal-bottoms.md
+    status: pending
+  - id: bump-and-run-reversal-tops
+    name: "Bump-and-run reversal tops"
+    url: https://thepatternsite.com/barrt.html
+    category: chart-pattern
+    file: chart-patterns/bump-and-run-reversal-tops.md
+    status: pending
+  - id: big-m
+    name: "Big M"
+    url: https://thepatternsite.com/bigm.html
+    category: chart-pattern
+    file: chart-patterns/big-m.md
+    status: pending
+  - id: big-w
+    name: "Big W"
+    url: https://thepatternsite.com/bigw.html
+    category: chart-pattern
+    file: chart-patterns/big-w.md
+    status: pending
+  - id: bearish-carl-v
+    name: "Bearish Carl V"
+    url: https://thepatternsite.com/CarlVBear.html
+    category: chart-pattern
+    file: chart-patterns/bearish-carl-v.md
+    status: pending
+  - id: bullish-carl-v
+    name: "Bullish Carl V"
+    url: https://thepatternsite.com/CarlVBull.html
+    category: chart-pattern
+    file: chart-patterns/bullish-carl-v.md
+    status: pending
+  - id: cat-s-ears
+    name: "Cat's ears"
+    url: https://thepatternsite.com/CatsEars.html
+    category: chart-pattern
+    file: chart-patterns/cat-s-ears.md
+    status: pending
+  - id: complex-head-and-shoulders-bottoms
+    name: "Complex head-and-shoulders bottoms"
+    url: https://thepatternsite.com/chsb.html
+    category: chart-pattern
+    file: chart-patterns/complex-head-and-shoulders-bottoms.md
+    status: pending
+  - id: complex-head-and-shoulders-tops
+    name: "Complex head-and-shoulders tops"
+    url: https://thepatternsite.com/chst.html
+    category: chart-pattern
+    file: chart-patterns/complex-head-and-shoulders-tops.md
+    status: pending
+  - id: head-and-shoulders-bottoms
+    name: "Head-and-shoulders bottoms"
+    url: https://thepatternsite.com/hsb.html
+    category: chart-pattern
+    file: chart-patterns/head-and-shoulders-bottoms.md
+    status: pending
+  - id: head-and-shoulders-tops
+    name: "Head-and-shoulders tops"
+    url: https://thepatternsite.com/hst.html
+    category: chart-pattern
+    file: chart-patterns/head-and-shoulders-tops.md
+    status: pending
+  - id: cloud-banks
+    name: "Cloud banks"
+    url: https://thepatternsite.com/Cloudbank.html
+    category: chart-pattern
+    file: chart-patterns/cloud-banks.md
+    status: pending
+  - id: cup-with-handle
+    name: "Cup with handle"
+    url: https://thepatternsite.com/cup.html
+    category: chart-pattern
+    file: chart-patterns/cup-with-handle.md
+    status: pending
+  - id: inverted-cup-with-handle
+    name: "Inverted cup with handle"
+    url: https://thepatternsite.com/icup.html
+    category: chart-pattern
+    file: chart-patterns/inverted-cup-with-handle.md
+    status: pending
+  - id: diamond-bottoms
+    name: "Diamond bottoms"
+    url: https://thepatternsite.com/diamondb.html
+    category: chart-pattern
+    file: chart-patterns/diamond-bottoms.md
+    status: pending
+  - id: diamond-tops
+    name: "Diamond tops"
+    url: https://thepatternsite.com/diamondt.html
+    category: chart-pattern
+    file: chart-patterns/diamond-tops.md
+    status: pending
+  - id: diving-board
+    name: "Diving board"
+    url: https://thepatternsite.com/DivingBoard.html
+    category: chart-pattern
+    file: chart-patterns/diving-board.md
+    status: pending
+  - id: falling-wedge
+    name: "Falling wedge"
+    url: https://thepatternsite.com/fallwedge.html
+    category: chart-pattern
+    file: chart-patterns/falling-wedge.md
+    status: pending
+  - id: rising-wedge
+    name: "Rising wedge"
+    url: https://thepatternsite.com/risewedge.html
+    category: chart-pattern
+    file: chart-patterns/rising-wedge.md
+    status: pending
+  - id: flags
+    name: "Flags"
+    url: https://thepatternsite.com/flags.html
+    category: chart-pattern
+    file: chart-patterns/flags.md
+    status: pending
+  - id: high-and-tight-flags
+    name: "High and tight flags"
+    url: https://thepatternsite.com/htf.html
+    category: chart-pattern
+    file: chart-patterns/high-and-tight-flags.md
+    status: pending
+  - id: pennants
+    name: "Pennants"
+    url: https://thepatternsite.com/pennants.html
+    category: chart-pattern
+    file: chart-patterns/pennants.md
+    status: pending
+  - id: flat-base
+    name: "Flat base"
+    url: https://thepatternsite.com/FlatBase.html
+    category: chart-pattern
+    file: chart-patterns/flat-base.md
+    status: pending
+  - id: horn-bottoms
+    name: "Horn bottoms"
+    url: https://thepatternsite.com/hornb.html
+    category: chart-pattern
+    file: chart-patterns/horn-bottoms.md
+    status: pending
+  - id: horn-tops
+    name: "Horn tops"
+    url: https://thepatternsite.com/hornt.html
+    category: chart-pattern
+    file: chart-patterns/horn-tops.md
+    status: pending
+  - id: inverted-roof
+    name: "Inverted roof"
+    url: https://thepatternsite.com/iroof.html
+    category: chart-pattern
+    file: chart-patterns/inverted-roof.md
+    status: pending
+  - id: roof
+    name: "Roof"
+    url: https://thepatternsite.com/roof.html
+    category: chart-pattern
+    file: chart-patterns/roof.md
+    status: pending
+  - id: island-tops
+    name: "Island tops"
+    url: https://thepatternsite.com/islandrev.html
+    category: chart-pattern
+    file: chart-patterns/island-tops.md
+    status: pending
+  - id: long-island
+    name: "Long island"
+    url: https://thepatternsite.com/longisland.html
+    category: chart-pattern
+    file: chart-patterns/long-island.md
+    status: pending
+  - id: inverted-v-pivot
+    name: "Inverted V pivot"
+    url: https://thepatternsite.com/InvVPivot.html
+    category: chart-pattern
+    file: chart-patterns/inverted-v-pivot.md
+    status: pending
+  - id: v-pivot
+    name: "V pivot"
+    url: https://thepatternsite.com/VPivot.html
+    category: chart-pattern
+    file: chart-patterns/v-pivot.md
+    status: pending
+  - id: v-bottoms
+    name: "V-bottoms"
+    url: https://thepatternsite.com/vBottoms.html
+    category: chart-pattern
+    file: chart-patterns/v-bottoms.md
+    status: pending
+  - id: extended-v-bottoms
+    name: "Extended V-bottoms."
+    url: https://thepatternsite.com/vBottomExts.html
+    category: chart-pattern
+    file: chart-patterns/extended-v-bottoms.md
+    status: pending
+  - id: v-tops
+    name: "V tops"
+    url: https://thepatternsite.com/VTop.html
+    category: chart-pattern
+    file: chart-patterns/v-tops.md
+    status: pending
+  - id: extended-v-tops
+    name: "Extended V-tops"
+    url: https://thepatternsite.com/VTopExt.html
+    category: chart-pattern
+    file: chart-patterns/extended-v-tops.md
+    status: pending
+  - id: measured-move-down
+    name: "Measured move down"
+    url: https://thepatternsite.com/mmd.html
+    category: chart-pattern
+    file: chart-patterns/measured-move-down.md
+    status: pending
+  - id: measured-move-up
+    name: "Measured move up"
+    url: https://thepatternsite.com/mmu.html
+    category: chart-pattern
+    file: chart-patterns/measured-move-up.md
+    status: pending
+  - id: price-mountain
+    name: "Price mountain"
+    url: https://thepatternsite.com/mountain.html
+    category: chart-pattern
+    file: chart-patterns/price-mountain.md
+    status: skipped
+  - id: pipe-bottoms
+    name: "Pipe bottoms"
+    url: https://thepatternsite.com/pipeb.html
+    category: chart-pattern
+    file: chart-patterns/pipe-bottoms.md
+    status: pending
+  - id: pipe-tops
+    name: "Pipe tops"
+    url: https://thepatternsite.com/pipet.html
+    category: chart-pattern
+    file: chart-patterns/pipe-tops.md
+    status: pending
+  - id: pothole
+    name: "Pothole"
+    url: https://thepatternsite.com/Pothole.html
+    category: chart-pattern
+    file: chart-patterns/pothole.md
+    status: pending
+  - id: rectangle-bottoms
+    name: "Rectangle bottoms"
+    url: https://thepatternsite.com/rectbots.html
+    category: chart-pattern
+    file: chart-patterns/rectangle-bottoms.md
+    status: pending
+  - id: rectangle-tops
+    name: "Rectangle tops"
+    url: https://thepatternsite.com/recttops.html
+    category: chart-pattern
+    file: chart-patterns/rectangle-tops.md
+    status: pending
+  - id: rounding-bottoms
+    name: "Rounding bottoms"
+    url: https://thepatternsite.com/roundb.html
+    category: chart-pattern
+    file: chart-patterns/rounding-bottoms.md
+    status: pending
+  - id: rounding-tops
+    name: "Rounding tops"
+    url: https://thepatternsite.com/roundingtop.html
+    category: chart-pattern
+    file: chart-patterns/rounding-tops.md
+    status: pending
+  - id: triple-bottoms
+    name: "Triple bottoms"
+    url: https://thepatternsite.com/tb.html
+    category: chart-pattern
+    file: chart-patterns/triple-bottoms.md
+    status: pending
+  - id: triple-tops
+    name: "Triple tops"
+    url: https://thepatternsite.com/tt.html
+    category: chart-pattern
+    file: chart-patterns/triple-tops.md
+    status: pending
+  - id: vertical-run-down
+    name: "Vertical run down"
+    url: https://thepatternsite.com/VerticalRunDown.html
+    category: chart-pattern
+    file: chart-patterns/vertical-run-down.md
+    status: pending
+  - id: vertical-run-up
+    name: "Vertical run up"
+    url: https://thepatternsite.com/VerticalRunUp.html
+    category: chart-pattern
+    file: chart-patterns/vertical-run-up.md
+    status: pending
+  - id: failure-swings
+    name: "Failure Swings"
+    url: https://thepatternsite.com/failswing.html
+    category: chart-pattern
+    file: chart-patterns/failure-swings.md
+    status: pending
+  - id: partial-declines
+    name: "Partial Declines"
+    url: https://thepatternsite.com/partdecline.html
+    category: chart-pattern
+    file: chart-patterns/partial-declines.md
+    status: pending
+  - id: partial-rises
+    name: "Partial Rises"
+    url: https://thepatternsite.com/partrises.html
+    category: chart-pattern
+    file: chart-patterns/partial-rises.md
+    status: pending
+  - id: bearish-abcd
+    name: "Bearish AB=CD"
+    url: https://thepatternsite.com/ABCDBear.html
+    category: harmonic
+    file: harmonics/bearish-abcd.md
+    status: pending
+  - id: bullish-abcd
+    name: "Bullish AB=CD"
+    url: https://thepatternsite.com/ABCDBull.html
+    category: harmonic
+    file: harmonics/bullish-abcd.md
+    status: pending
+  - id: bearish-bat
+    name: "Bearish bat"
+    url: https://thepatternsite.com/BatBear.html
+    category: harmonic
+    file: harmonics/bearish-bat.md
+    status: pending
+  - id: bullish-bat
+    name: "Bullish bat"
+    url: https://thepatternsite.com/BatBull.html
+    category: harmonic
+    file: harmonics/bullish-bat.md
+    status: pending
+  - id: bearish-butterfly
+    name: "Bearish butterfly"
+    url: https://thepatternsite.com/ButterflyBear.html
+    category: harmonic
+    file: harmonics/bearish-butterfly.md
+    status: pending
+  - id: bullish-butterfly
+    name: "Bullish butterfly"
+    url: https://thepatternsite.com/ButterflyBull.html
+    category: harmonic
+    file: harmonics/bullish-butterfly.md
+    status: pending
+  - id: bearish-crab
+    name: "Bearish crab"
+    url: https://thepatternsite.com/CrabBear.html
+    category: harmonic
+    file: harmonics/bearish-crab.md
+    status: pending
+  - id: bullish-crab
+    name: "Bullish crab"
+    url: https://thepatternsite.com/CrabBull.html
+    category: harmonic
+    file: harmonics/bullish-crab.md
+    status: pending
+  - id: bearish-gartley
+    name: "Bearish Gartley"
+    url: https://thepatternsite.com/GartleyBear.html
+    category: harmonic
+    file: harmonics/bearish-gartley.md
+    status: pending
+  - id: bullish-gartley
+    name: "Bullish Gartley"
+    url: https://thepatternsite.com/GartleyBull.html
+    category: harmonic
+    file: harmonics/bullish-gartley.md
+    status: pending
+  - id: bearish-wolfe-wave
+    name: "Bearish Wolfe wave"
+    url: https://thepatternsite.com/WolfeWaveBear.html
+    category: harmonic
+    file: harmonics/bearish-wolfe-wave.md
+    status: pending
+  - id: bullish-wolfe-wave
+    name: "Bullish Wolfe wave"
+    url: https://thepatternsite.com/WolfeWaveBull.html
+    category: harmonic
+    file: harmonics/bullish-wolfe-wave.md
+    status: pending
+  - id: bearish-2-close
+    name: "Bearish 2-Close"
+    url: https://thepatternsite.com/2Closebear.html
+    category: small-pattern
+    file: small-patterns/bearish-2-close.md
+    status: pending
+  - id: bullish-2-close
+    name: "Bullish 2-close"
+    url: https://thepatternsite.com/2Closebull.html
+    category: small-pattern
+    file: small-patterns/bullish-2-close.md
+    status: pending
+  - id: 2-dance
+    name: "2-dance"
+    url: https://thepatternsite.com/2Dance.html
+    category: small-pattern
+    file: small-patterns/2-dance.md
+    status: pending
+  - id: 2-did
+    name: "2-did"
+    url: https://thepatternsite.com/2Did.html
+    category: small-pattern
+    file: small-patterns/2-did.md
+    status: pending
+  - id: bearish-2-step
+    name: "Bearish 2-step"
+    url: https://thepatternsite.com/2StepBear.html
+    category: small-pattern
+    file: small-patterns/bearish-2-step.md
+    status: pending
+  - id: bullish-2-step
+    name: "Bullish 2-step"
+    url: https://thepatternsite.com/2StepBull.html
+    category: small-pattern
+    file: small-patterns/bullish-2-step.md
+    status: pending
+  - id: 2-tall
+    name: "2-tall"
+    url: https://thepatternsite.com/TallDance.html
+    category: small-pattern
+    file: small-patterns/2-tall.md
+    status: pending
+  - id: 3-bar
+    name: "3-Bar"
+    url: https://thepatternsite.com/3Bar.html
+    category: small-pattern
+    file: small-patterns/3-bar.md
+    status: pending
+  - id: 3dc
+    name: "3DC"
+    url: https://thepatternsite.com/3DC.html
+    category: small-pattern
+    file: small-patterns/3dc.md
+    status: pending
+  - id: 3l-r
+    name: "3L-R"
+    url: https://thepatternsite.com/3L-R.html
+    category: small-pattern
+    file: small-patterns/3l-r.md
+    status: pending
+  - id: inverted-3l-r
+    name: "Inverted 3L-R"
+    url: https://thepatternsite.com/3L-Ri.html
+    category: small-pattern
+    file: small-patterns/inverted-3l-r.md
+    status: pending
+  - id: closing-price-reversal-downtrend
+    name: "Closing price reversal, downtrend"
+    url: https://thepatternsite.com/CPRD.html
+    category: small-pattern
+    file: small-patterns/closing-price-reversal-downtrend.md
+    status: pending
+  - id: closing-price-reversal-uptrend
+    name: "Closing price reversal, uptrend"
+    url: https://thepatternsite.com/CPRU.html
+    category: small-pattern
+    file: small-patterns/closing-price-reversal-uptrend.md
+    status: pending
+  - id: bearish-double-key-reversal
+    name: "Bearish double key reversal"
+    url: https://thepatternsite.com/DoubleKeyBear.html
+    category: small-pattern
+    file: small-patterns/bearish-double-key-reversal.md
+    status: pending
+  - id: bullish-double-key-reversal
+    name: "Bullish double key reversal"
+    url: https://thepatternsite.com/DoubleKeyBull.html
+    category: small-pattern
+    file: small-patterns/bullish-double-key-reversal.md
+    status: pending
+  - id: bearish-fakey
+    name: "Bearish fakey"
+    url: https://thepatternsite.com/FakeyBear.html
+    category: small-pattern
+    file: small-patterns/bearish-fakey.md
+    status: pending
+  - id: bullish-fakey
+    name: "Bullish fakey"
+    url: https://thepatternsite.com/FakeyBull.html
+    category: small-pattern
+    file: small-patterns/bullish-fakey.md
+    status: pending
+  - id: gap2h
+    name: "Gap2H"
+    url: https://thepatternsite.com/Gap2H.html
+    category: small-pattern
+    file: small-patterns/gap2h.md
+    status: pending
+  - id: inverted-gap2h
+    name: "Inverted gap2H"
+    url: https://thepatternsite.com/Gap2Hi.html
+    category: small-pattern
+    file: small-patterns/inverted-gap2h.md
+    status: pending
+  - id: hook-reversal-downtrend
+    name: "Hook reversal, downtrend"
+    url: https://thepatternsite.com/HRD.html
+    category: small-pattern
+    file: small-patterns/hook-reversal-downtrend.md
+    status: pending
+  - id: hook-reversal-uptrend
+    name: "Hook reversal, uptrend"
+    url: https://thepatternsite.com/HRU.html
+    category: small-pattern
+    file: small-patterns/hook-reversal-uptrend.md
+    status: pending
+  - id: inside-days
+    name: "Inside days"
+    url: https://thepatternsite.com/InsideDays.html
+    category: small-pattern
+    file: small-patterns/inside-days.md
+    status: pending
+  - id: key-reversal-downtrend
+    name: "Key reversal, downtrend"
+    url: https://thepatternsite.com/KRD.html
+    category: small-pattern
+    file: small-patterns/key-reversal-downtrend.md
+    status: pending
+  - id: key-reversal-uptrend
+    name: "Key reversal, uptrend"
+    url: https://thepatternsite.com/KRU.html
+    category: small-pattern
+    file: small-patterns/key-reversal-uptrend.md
+    status: pending
+  - id: key-reversal-bar-bullish-v2
+    name: "Key reversal bar, bullish, v2"
+    url: https://thepatternsite.com/KRB2.html
+    category: small-pattern
+    file: small-patterns/key-reversal-bar-bullish-v2.md
+    status: pending
+  - id: key-reversal-bar-bearish-v2
+    name: "Key reversal bar, bearish, v2"
+    url: https://thepatternsite.com/KRB2Bear.html
+    category: small-pattern
+    file: small-patterns/key-reversal-bar-bearish-v2.md
+    status: pending
+  - id: narrow-range-4
+    name: "Narrow range 4"
+    url: https://thepatternsite.com/NR4.html
+    category: small-pattern
+    file: small-patterns/narrow-range-4.md
+    status: pending
+  - id: narrow-range-7
+    name: "Narrow range 7"
+    url: https://thepatternsite.com/nr7.html
+    category: small-pattern
+    file: small-patterns/narrow-range-7.md
+    status: pending
+  - id: one-day-reversal-bottom
+    name: "One day reversal, bottom"
+    url: https://thepatternsite.com/ODRB.html
+    category: small-pattern
+    file: small-patterns/one-day-reversal-bottom.md
+    status: pending
+  - id: one-day-reversal-top
+    name: "One day reversal, top"
+    url: https://thepatternsite.com/ODRT.html
+    category: small-pattern
+    file: small-patterns/one-day-reversal-top.md
+    status: pending
+  - id: open-close-reversal-downtrend
+    name: "Open-close reversal, downtrend"
+    url: https://thepatternsite.com/OCRD.html
+    category: small-pattern
+    file: small-patterns/open-close-reversal-downtrend.md
+    status: pending
+  - id: open-close-reversal-uptrend
+    name: "Open-close reversal, uptrend"
+    url: https://thepatternsite.com/OCRU.html
+    category: small-pattern
+    file: small-patterns/open-close-reversal-uptrend.md
+    status: pending
+  - id: outside-days
+    name: "Outside Days"
+    url: https://thepatternsite.com/OutsideDays.html
+    category: small-pattern
+    file: small-patterns/outside-days.md
+    status: pending
+  - id: pivot-point-reversal-downtrend
+    name: "Pivot point reversal, downtrend"
+    url: https://thepatternsite.com/PPRD.html
+    category: small-pattern
+    file: small-patterns/pivot-point-reversal-downtrend.md
+    status: pending
+  - id: pivot-point-reversal-uptrend
+    name: "Pivot point reversal, uptrend"
+    url: https://thepatternsite.com/PPRU.html
+    category: small-pattern
+    file: small-patterns/pivot-point-reversal-uptrend.md
+    status: pending
+  - id: shark-32
+    name: "Shark-32"
+    url: https://thepatternsite.com/Shark32.html
+    category: small-pattern
+    file: small-patterns/shark-32.md
+    status: pending
+  - id: bearish-turn-key
+    name: "Bearish turn-key"
+    url: https://thepatternsite.com/TurnkeyBear.html
+    category: small-pattern
+    file: small-patterns/bearish-turn-key.md
+    status: pending
+  - id: bullish-turn-key
+    name: "Bullish turn-key"
+    url: https://thepatternsite.com/TurnkeyBull.html
+    category: small-pattern
+    file: small-patterns/bullish-turn-key.md
+    status: pending
+  - id: downside-weekly-reversal
+    name: "Downside weekly reversal"
+    url: https://thepatternsite.com/WeeklyRevsDownside.html
+    category: small-pattern
+    file: small-patterns/downside-weekly-reversal.md
+    status: pending
+  - id: upside-weekly-reversal
+    name: "Upside weekly reversal"
+    url: https://thepatternsite.com/WeeklyRevsUpside.html
+    category: small-pattern
+    file: small-patterns/upside-weekly-reversal.md
+    status: pending
+  - id: wide-ranging-day-downside-reversal
+    name: "Wide ranging day downside reversal"
+    url: https://thepatternsite.com/WRDDR.html
+    category: small-pattern
+    file: small-patterns/wide-ranging-day-downside-reversal.md
+    status: pending
+  - id: wide-ranging-day-upside-reversal
+    name: "Wide ranging day upside reversal"
+    url: https://thepatternsite.com/WRDUR.html
+    category: small-pattern
+    file: small-patterns/wide-ranging-day-upside-reversal.md
+    status: pending
+  - id: spikes-and-tails
+    name: "Spikes and Tails"
+    url: https://thepatternsite.com/spikes.html
+    category: small-pattern
+    file: small-patterns/spikes-and-tails.md
+    status: pending
+  - id: 10-new-price-lines
+    name: "10 new price lines"
+    url: https://thepatternsite.com/10NewPriceLines.html
+    category: candlestick
+    file: candlesticks/10-new-price-lines.md
+    status: pending
+  - id: 12-new-price-lines
+    name: "12 new price lines"
+    url: https://thepatternsite.com/12NewPriceLines.html
+    category: candlestick
+    file: candlesticks/12-new-price-lines.md
+    status: pending
+  - id: 13-new-price-lines
+    name: "13 new price lines"
+    url: https://thepatternsite.com/13NewPriceLines.html
+    category: candlestick
+    file: candlesticks/13-new-price-lines.md
+    status: pending
+  - id: 8-new-price-lines
+    name: "8 new price lines"
+    url: https://thepatternsite.com/8NewPriceLines.html
+    category: candlestick
+    file: candlesticks/8-new-price-lines.md
+    status: pending
+  - id: bearish-abandoned-baby
+    name: "Bearish abandoned baby"
+    url: https://thepatternsite.com/AbandonBaby.html
+    category: candlestick
+    file: candlesticks/bearish-abandoned-baby.md
+    status: pending
+  - id: bullish-abandoned-baby
+    name: "Bullish abandoned baby"
+    url: https://thepatternsite.com/AbandonBabyBull.html
+    category: candlestick
+    file: candlesticks/bullish-abandoned-baby.md
+    status: pending
+  - id: above-the-stomach
+    name: "Above the Stomach"
+    url: https://thepatternsite.com/AboveStomach.html
+    category: candlestick
+    file: candlesticks/above-the-stomach.md
+    status: pending
+  - id: advance-block
+    name: "Advance block"
+    url: https://thepatternsite.com/AdvanceBlock.html
+    category: candlestick
+    file: candlesticks/advance-block.md
+    status: pending
+  - id: bearish-breakaway
+    name: "Bearish breakaway"
+    url: https://thepatternsite.com/BearBreakaway.html
+    category: candlestick
+    file: candlesticks/bearish-breakaway.md
+    status: pending
+  - id: bearish-engulfing
+    name: "Bearish engulfing"
+    url: https://thepatternsite.com/BearEngulfing.html
+    category: candlestick
+    file: candlesticks/bearish-engulfing.md
+    status: pending
+  - id: below-the-stomach
+    name: "Below the Stomach"
+    url: https://thepatternsite.com/BelowStomach.html
+    category: candlestick
+    file: candlesticks/below-the-stomach.md
+    status: pending
+  - id: bearish-belt-hold
+    name: "Bearish belt hold"
+    url: https://thepatternsite.com/BeltHoldBear.html
+    category: candlestick
+    file: candlesticks/bearish-belt-hold.md
+    status: pending
+  - id: bullish-belt-hold
+    name: "Bullish belt hold"
+    url: https://thepatternsite.com/BeltHoldBull.html
+    category: candlestick
+    file: candlesticks/bullish-belt-hold.md
+    status: pending
+  - id: black-marubozu
+    name: "Black marubozu"
+    url: https://thepatternsite.com/BlackMarubozu.html
+    category: candlestick
+    file: candlesticks/black-marubozu.md
+    status: pending
+  - id: black-candle
+    name: "Black candle"
+    url: https://thepatternsite.com/BlkCandle.html
+    category: candlestick
+    file: candlesticks/black-candle.md
+    status: pending
+  - id: short-black-candle
+    name: "Short black candle"
+    url: https://thepatternsite.com/BlkCandleShort.html
+    category: candlestick
+    file: candlesticks/short-black-candle.md
+    status: pending
+  - id: bullish-breakaway
+    name: "Bullish breakaway"
+    url: https://thepatternsite.com/BullBreakaway.html
+    category: candlestick
+    file: candlesticks/bullish-breakaway.md
+    status: pending
+  - id: bullish-engulfing
+    name: "Bullish Engulfing"
+    url: https://thepatternsite.com/BullEngulfing.html
+    category: candlestick
+    file: candlesticks/bullish-engulfing.md
+    status: done
+  - id: closing-black-marubozu
+    name: "Closing black marubozu"
+    url: https://thepatternsite.com/CloseBlkMarubozu.html
+    category: candlestick
+    file: candlesticks/closing-black-marubozu.md
+    status: pending
+  - id: closing-white-marubozu
+    name: "Closing white marubozu"
+    url: https://thepatternsite.com/ClosingWhiteMarubozu.html
+    category: candlestick
+    file: candlesticks/closing-white-marubozu.md
+    status: pending
+  - id: collapsing-doji-star
+    name: "Collapsing doji star"
+    url: https://thepatternsite.com/CollapseDojiStar.html
+    category: candlestick
+    file: candlesticks/collapsing-doji-star.md
+    status: pending
+  - id: concealing-baby-swallow
+    name: "Concealing baby swallow"
+    url: https://thepatternsite.com/ConcealBaby.html
+    category: candlestick
+    file: candlesticks/concealing-baby-swallow.md
+    status: pending
+  - id: dark-cloud-cover
+    name: "Dark cloud cover"
+    url: https://thepatternsite.com/DarkCloudCover.html
+    category: candlestick
+    file: candlesticks/dark-cloud-cover.md
+    status: pending
+  - id: deliberation
+    name: "Deliberation"
+    url: https://thepatternsite.com/Deliberation.html
+    category: candlestick
+    file: candlesticks/deliberation.md
+    status: pending
+  - id: bearish-doji-star
+    name: "Bearish doji star"
+    url: https://thepatternsite.com/DojiStarBear.html
+    category: candlestick
+    file: candlesticks/bearish-doji-star.md
+    status: pending
+  - id: bullish-doji-star
+    name: "Bullish doji star"
+    url: https://thepatternsite.com/DojiStarBull.html
+    category: candlestick
+    file: candlesticks/bullish-doji-star.md
+    status: pending
+  - id: downside-gap-three-methods
+    name: "Downside gap three methods"
+    url: https://thepatternsite.com/DownGap3Methods.html
+    category: candlestick
+    file: candlesticks/downside-gap-three-methods.md
+    status: pending
+  - id: downside-tasuki-gap
+    name: "Downside Tasuki Gap"
+    url: https://thepatternsite.com/DownsideTasukiGap.html
+    category: candlestick
+    file: candlesticks/downside-tasuki-gap.md
+    status: pending
+  - id: dragonfly-doji
+    name: "Dragonfly doji"
+    url: https://thepatternsite.com/Dragonfly.html
+    category: candlestick
+    file: candlesticks/dragonfly-doji.md
+    status: pending
+  - id: evening-doji-star
+    name: "Evening doji star"
+    url: https://thepatternsite.com/EveningDojiStar.html
+    category: candlestick
+    file: candlesticks/evening-doji-star.md
+    status: pending
+  - id: evening-star
+    name: "Evening star"
+    url: https://thepatternsite.com/EveningStar.html
+    category: candlestick
+    file: candlesticks/evening-star.md
+    status: pending
+  - id: falling-3-methods
+    name: "Falling 3 methods"
+    url: https://thepatternsite.com/Falling3Methods.html
+    category: candlestick
+    file: candlesticks/falling-3-methods.md
+    status: pending
+  - id: falling-window
+    name: "Falling window"
+    url: https://thepatternsite.com/FallingWindow.html
+    category: candlestick
+    file: candlesticks/falling-window.md
+    status: pending
+  - id: gapping-down-doji
+    name: "Gapping down doji"
+    url: https://thepatternsite.com/GappingDownDoji.html
+    category: candlestick
+    file: candlesticks/gapping-down-doji.md
+    status: pending
+  - id: gapping-up-doji
+    name: "Gapping up doji"
+    url: https://thepatternsite.com/GappingUpDoji.html
+    category: candlestick
+    file: candlesticks/gapping-up-doji.md
+    status: pending
+  - id: gravestone-doji
+    name: "Gravestone doji"
+    url: https://thepatternsite.com/Gravestone.html
+    category: candlestick
+    file: candlesticks/gravestone-doji.md
+    status: pending
+  - id: hammer
+    name: "Hammer"
+    url: https://thepatternsite.com/Hammer.html
+    category: candlestick
+    file: candlesticks/hammer.md
+    status: pending
+  - id: inverted-hammer-2-line
+    name: "Inverted hammer, 2 line"
+    url: https://thepatternsite.com/HammerInv.html
+    category: candlestick
+    file: candlesticks/inverted-hammer-2-line.md
+    status: pending
+  - id: hanging-man
+    name: "Hanging man"
+    url: https://thepatternsite.com/HangingMan.html
+    category: candlestick
+    file: candlesticks/hanging-man.md
+    status: pending
+  - id: bearish-harami
+    name: "Bearish harami"
+    url: https://thepatternsite.com/HaramiBear.html
+    category: candlestick
+    file: candlesticks/bearish-harami.md
+    status: pending
+  - id: bullish-harami
+    name: "Bullish harami"
+    url: https://thepatternsite.com/HaramiBull.html
+    category: candlestick
+    file: candlesticks/bullish-harami.md
+    status: pending
+  - id: bearish-harami-cross
+    name: "Bearish harami cross"
+    url: https://thepatternsite.com/HaramiCrossBear.html
+    category: candlestick
+    file: candlesticks/bearish-harami-cross.md
+    status: pending
+  - id: bullish-harami-cross
+    name: "Bullish harami cross"
+    url: https://thepatternsite.com/HaramiCrossBull.html
+    category: candlestick
+    file: candlesticks/bullish-harami-cross.md
+    status: pending
+  - id: high-wave
+    name: "High wave"
+    url: https://thepatternsite.com/HighWave.html
+    category: candlestick
+    file: candlesticks/high-wave.md
+    status: pending
+  - id: hikkake-bearish
+    name: "Hikkake, bearish"
+    url: https://thepatternsite.com/HikkakeBear.html
+    category: candlestick
+    file: candlesticks/hikkake-bearish.md
+    status: pending
+  - id: hikkake-bullish
+    name: "Hikkake, bullish"
+    url: https://thepatternsite.com/HikkakeBull.html
+    category: candlestick
+    file: candlesticks/hikkake-bullish.md
+    status: pending
+  - id: homing-pigeon
+    name: "Homing pigeon"
+    url: https://thepatternsite.com/HomingPigeon.html
+    category: candlestick
+    file: candlesticks/homing-pigeon.md
+    status: pending
+  - id: identical-three-crows
+    name: "Identical three crows"
+    url: https://thepatternsite.com/Identical3Crows.html
+    category: candlestick
+    file: candlesticks/identical-three-crows.md
+    status: pending
+  - id: in-neck
+    name: "In neck"
+    url: https://thepatternsite.com/InNeck.html
+    category: candlestick
+    file: candlesticks/in-neck.md
+    status: pending
+  - id: bearish-kicking
+    name: "Bearish kicking"
+    url: https://thepatternsite.com/KickingBear.html
+    category: candlestick
+    file: candlesticks/bearish-kicking.md
+    status: pending
+  - id: bullish-kicking
+    name: "Bullish kicking"
+    url: https://thepatternsite.com/KickingBull.html
+    category: candlestick
+    file: candlesticks/bullish-kicking.md
+    status: pending
+  - id: ladder-bottom
+    name: "Ladder bottom"
+    url: https://thepatternsite.com/LadderBottom.html
+    category: candlestick
+    file: candlesticks/ladder-bottom.md
+    status: pending
+  - id: last-engulfing-bottom
+    name: "Last engulfing bottom"
+    url: https://thepatternsite.com/LastEngulfBottom.html
+    category: candlestick
+    file: candlesticks/last-engulfing-bottom.md
+    status: pending
+  - id: last-engulfing-top
+    name: "Last engulfing top"
+    url: https://thepatternsite.com/LastEngulfTop.html
+    category: candlestick
+    file: candlesticks/last-engulfing-top.md
+    status: pending
+  - id: black-long-day
+    name: "Black long day"
+    url: https://thepatternsite.com/LongBlack.html
+    category: candlestick
+    file: candlesticks/black-long-day.md
+    status: pending
+  - id: long-legged-doji
+    name: "Long legged doji"
+    url: https://thepatternsite.com/LongLegDoji.html
+    category: candlestick
+    file: candlesticks/long-legged-doji.md
+    status: pending
+  - id: white-long-day
+    name: "White long day"
+    url: https://thepatternsite.com/LongWhiteDay.html
+    category: candlestick
+    file: candlesticks/white-long-day.md
+    status: pending
+  - id: mat-hold
+    name: "Mat hold"
+    url: https://thepatternsite.com/MatHold.html
+    category: candlestick
+    file: candlesticks/mat-hold.md
+    status: pending
+  - id: matching-low
+    name: "Matching low"
+    url: https://thepatternsite.com/MatchingLow.html
+    category: candlestick
+    file: candlesticks/matching-low.md
+    status: pending
+  - id: bearish-meeting-lines
+    name: "Bearish meeting lines"
+    url: https://thepatternsite.com/MeetingLinesBear.html
+    category: candlestick
+    file: candlesticks/bearish-meeting-lines.md
+    status: pending
+  - id: bullish-meeting-lines
+    name: "Bullish meeting lines"
+    url: https://thepatternsite.com/MeetingLinesBull.html
+    category: candlestick
+    file: candlesticks/bullish-meeting-lines.md
+    status: pending
+  - id: morning-doji-star
+    name: "Morning doji star"
+    url: https://thepatternsite.com/MorningDojiStar.html
+    category: candlestick
+    file: candlesticks/morning-doji-star.md
+    status: pending
+  - id: morning-star
+    name: "Morning star"
+    url: https://thepatternsite.com/MorningStar.html
+    category: candlestick
+    file: candlesticks/morning-star.md
+    status: pending
+  - id: northern-doji
+    name: "Northern doji"
+    url: https://thepatternsite.com/NorthernDoji.html
+    category: candlestick
+    file: candlesticks/northern-doji.md
+    status: pending
+  - id: on-neck
+    name: "On neck"
+    url: https://thepatternsite.com/OnNeck.html
+    category: candlestick
+    file: candlesticks/on-neck.md
+    status: pending
+  - id: opening-black-marubozu
+    name: "Opening Black marubozu"
+    url: https://thepatternsite.com/OpenBlkMaru.html
+    category: candlestick
+    file: candlesticks/opening-black-marubozu.md
+    status: pending
+  - id: opening-white-marubozu
+    name: "Opening white marubozu"
+    url: https://thepatternsite.com/OpenWhiteMarubozu.html
+    category: candlestick
+    file: candlesticks/opening-white-marubozu.md
+    status: pending
+  - id: piercing-pattern
+    name: "Piercing pattern"
+    url: https://thepatternsite.com/Piercing.html
+    category: candlestick
+    file: candlesticks/piercing-pattern.md
+    status: pending
+  - id: rickshaw-man
+    name: "Rickshaw man"
+    url: https://thepatternsite.com/RickshawMan.html
+    category: candlestick
+    file: candlesticks/rickshaw-man.md
+    status: pending
+  - id: rising-3-methods
+    name: "Rising 3 methods"
+    url: https://thepatternsite.com/Rising3Methods.html
+    category: candlestick
+    file: candlesticks/rising-3-methods.md
+    status: pending
+  - id: rising-window
+    name: "Rising window"
+    url: https://thepatternsite.com/RisingWindow.html
+    category: candlestick
+    file: candlesticks/rising-window.md
+    status: pending
+  - id: bearish-separating-lines
+    name: "Bearish separating lines"
+    url: https://thepatternsite.com/SeparateLinesBear.html
+    category: candlestick
+    file: candlesticks/bearish-separating-lines.md
+    status: pending
+  - id: bullish-separating-lines
+    name: "Bullish separating lines"
+    url: https://thepatternsite.com/SeparateLinesBull.html
+    category: candlestick
+    file: candlesticks/bullish-separating-lines.md
+    status: pending
+  - id: shooting-star-1-line
+    name: "Shooting star (1 line)"
+    url: https://thepatternsite.com/ShootingStar.html
+    category: candlestick
+    file: candlesticks/shooting-star-1-line.md
+    status: pending
+  - id: shooting-star-2-lines
+    name: "Shooting star (2 lines)"
+    url: https://thepatternsite.com/ShootingStar2.html
+    category: candlestick
+    file: candlesticks/shooting-star-2-lines.md
+    status: pending
+  - id: short-white-candle
+    name: "Short white candle"
+    url: https://thepatternsite.com/ShortWhiteCandle.html
+    category: candlestick
+    file: candlesticks/short-white-candle.md
+    status: pending
+  - id: bearish-side-by-side-white-lines
+    name: "Bearish side by side white lines"
+    url: https://thepatternsite.com/SidebySideWhiteLinesBear.html
+    category: candlestick
+    file: candlesticks/bearish-side-by-side-white-lines.md
+    status: pending
+  - id: bullish-side-by-side-white-lines
+    name: "Bullish side by side white lines"
+    url: https://thepatternsite.com/SidebySideWhiteLinesBull.html
+    category: candlestick
+    file: candlesticks/bullish-side-by-side-white-lines.md
+    status: pending
+  - id: southern-doji
+    name: "Southern doji"
+    url: https://thepatternsite.com/SouthernDoji.html
+    category: candlestick
+    file: candlesticks/southern-doji.md
+    status: pending
+  - id: black-spinning-top
+    name: "Black spinning top"
+    url: https://thepatternsite.com/SpinTopBlack.html
+    category: candlestick
+    file: candlesticks/black-spinning-top.md
+    status: pending
+  - id: white-spinning-top
+    name: "White spinning top"
+    url: https://thepatternsite.com/SpinTopWhite.html
+    category: candlestick
+    file: candlesticks/white-spinning-top.md
+    status: pending
+  - id: stick-sandwich
+    name: "Stick sandwich"
+    url: https://thepatternsite.com/StickSandwich.html
+    category: candlestick
+    file: candlesticks/stick-sandwich.md
+    status: pending
+  - id: takuri-line
+    name: "Takuri line"
+    url: https://thepatternsite.com/TakuriLine.html
+    category: candlestick
+    file: candlesticks/takuri-line.md
+    status: pending
+  - id: three-black-crows
+    name: "Three black crows"
+    url: https://thepatternsite.com/ThreeBlackCrows.html
+    category: candlestick
+    file: candlesticks/three-black-crows.md
+    status: pending
+  - id: three-inside-down
+    name: "Three inside down"
+    url: https://thepatternsite.com/ThreeInsideDown.html
+    category: candlestick
+    file: candlesticks/three-inside-down.md
+    status: pending
+  - id: three-inside-up
+    name: "Three inside up"
+    url: https://thepatternsite.com/ThreeInsideUp.html
+    category: candlestick
+    file: candlesticks/three-inside-up.md
+    status: pending
+  - id: bearish-three-line-strike
+    name: "Bearish three line strike"
+    url: https://thepatternsite.com/ThreeLineStrikeBear.html
+    category: candlestick
+    file: candlesticks/bearish-three-line-strike.md
+    status: pending
+  - id: bullish-three-line-strike
+    name: "Bullish three line strike"
+    url: https://thepatternsite.com/ThreeLineStrikeBull.html
+    category: candlestick
+    file: candlesticks/bullish-three-line-strike.md
+    status: pending
+  - id: three-outside-down
+    name: "Three outside down"
+    url: https://thepatternsite.com/ThreeOutsideDown.html
+    category: candlestick
+    file: candlesticks/three-outside-down.md
+    status: pending
+  - id: three-outside-up
+    name: "Three outside up"
+    url: https://thepatternsite.com/ThreeOutsideUp.html
+    category: candlestick
+    file: candlesticks/three-outside-up.md
+    status: pending
+  - id: three-stars-in-the-south
+    name: "Three stars in the south"
+    url: https://thepatternsite.com/ThreeStarsSouth.html
+    category: candlestick
+    file: candlesticks/three-stars-in-the-south.md
+    status: pending
+  - id: three-white-soldiers
+    name: "Three white soldiers"
+    url: https://thepatternsite.com/ThreeWhiteSoldiers.html
+    category: candlestick
+    file: candlesticks/three-white-soldiers.md
+    status: pending
+  - id: thrusting
+    name: "Thrusting"
+    url: https://thepatternsite.com/Thrusting.html
+    category: candlestick
+    file: candlesticks/thrusting.md
+    status: pending
+  - id: bearish-tri-star
+    name: "Bearish tri-star"
+    url: https://thepatternsite.com/TriStarBear.html
+    category: candlestick
+    file: candlesticks/bearish-tri-star.md
+    status: pending
+  - id: bullish-tri-star
+    name: "Bullish tri-star"
+    url: https://thepatternsite.com/TriStarBull.html
+    category: candlestick
+    file: candlesticks/bullish-tri-star.md
+    status: pending
+  - id: tweezers-bottom
+    name: "Tweezers Bottom"
+    url: https://thepatternsite.com/TweezersBottom.html
+    category: candlestick
+    file: candlesticks/tweezers-bottom.md
+    status: pending
+  - id: tweezers-top
+    name: "Tweezers top"
+    url: https://thepatternsite.com/TweezersTop.html
+    category: candlestick
+    file: candlesticks/tweezers-top.md
+    status: pending
+  - id: two-black-gapping
+    name: "Two black gapping"
+    url: https://thepatternsite.com/TwoBlackGapping.html
+    category: candlestick
+    file: candlesticks/two-black-gapping.md
+    status: pending
+  - id: two-crows
+    name: "Two crows"
+    url: https://thepatternsite.com/TwoCrows.html
+    category: candlestick
+    file: candlesticks/two-crows.md
+    status: pending
+  - id: unique-three-river-bottom
+    name: "Unique three river bottom"
+    url: https://thepatternsite.com/Unique3RiverBottom.html
+    category: candlestick
+    file: candlesticks/unique-three-river-bottom.md
+    status: pending
+  - id: upside-gap-three-methods
+    name: "Upside gap three methods"
+    url: https://thepatternsite.com/UpGap3Methods.html
+    category: candlestick
+    file: candlesticks/upside-gap-three-methods.md
+    status: pending
+  - id: upside-gap-two-crows
+    name: "Upside gap two crows"
+    url: https://thepatternsite.com/UpGapTwoCrows.html
+    category: candlestick
+    file: candlesticks/upside-gap-two-crows.md
+    status: pending
+  - id: upside-tasuki-gap
+    name: "Upside Tasuki gap"
+    url: https://thepatternsite.com/UpsideTasukiGap.html
+    category: candlestick
+    file: candlesticks/upside-tasuki-gap.md
+    status: pending
+  - id: white-candle
+    name: "White candle"
+    url: https://thepatternsite.com/WhiteCandle.html
+    category: candlestick
+    file: candlesticks/white-candle.md
+    status: pending
+  - id: white-marubozu
+    name: "White marubozu"
+    url: https://thepatternsite.com/WhiteMarubozu.html
+    category: candlestick
+    file: candlesticks/white-marubozu.md
+    status: pending
