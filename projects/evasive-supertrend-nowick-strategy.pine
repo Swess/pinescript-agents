@@ -1,0 +1,190 @@
+// Evasive SuperTrend band logic derived from "Evasive SuperTrend [LuxAlgo]"
+// (CC BY-NC-SA 4.0, https://creativecommons.org/licenses/by-nc-sa/4.0/) © LuxAlgo
+// No-wick / compensation logic derived from "No Wick Candlestick Identifier".
+
+//@version=6
+strategy("Evasive SuperTrend + No-Wick Compensation", "EST + NoWick",
+     overlay           = true,
+     pyramiding        = 4,
+     default_qty_type  = strategy.fixed,
+     default_qty_value = 1,
+     initial_capital   = 100000,
+     max_labels_count  = 500,
+     max_lines_count   = 500)
+//@strategy_alert_message {{strategy.order.alert_message}}
+
+//---------------------------------------------------------------------------------------------------------------------}
+// Constants
+//---------------------------------------------------------------------------------------------------------------------{
+color BULL_COLOR = #089981
+color BEAR_COLOR = #f23645
+color COMP_COLOR = color.rgb(255, 174, 53, 5)
+
+//---------------------------------------------------------------------------------------------------------------------}
+// Inputs
+//---------------------------------------------------------------------------------------------------------------------{
+string ST_GROUP       = 'SuperTrend Settings'
+int lengthInput       = input.int(10, 'ATR Length', minval = 1, group = ST_GROUP)
+float multiplierInput = input.float(3.0, 'Base Multiplier', minval = 0.1, step = 0.1, group = ST_GROUP)
+
+string NOISE_GROUP    = 'Noise Avoidance Logic'
+float thresholdInput  = input.float(1.0, 'Noise Threshold (xATR)', minval = 0.1, step = 0.1, group = NOISE_GROUP, tooltip = 'If price gets closer to the band than this value, the band is pushed away and the bar is flagged noisy.')
+float alphaInput      = input.float(0.5, 'Expansion Alpha (xATR)', minval = 0, step = 0.1, group = NOISE_GROUP, tooltip = 'Distance (in ATRs) to push the band away when noise is detected.')
+
+string WICK_GROUP     = 'No-Wick Detection'
+int tickTolInput      = input.int(0, 'Wick Tolerance (ticks)', minval = 0, group = WICK_GROUP, tooltip = 'A bar counts as no-wick if the wick on the open side is this many ticks or fewer. 0 reproduces the original exact open == low / open == high test.')
+
+string TRADE_GROUP    = 'Entries'
+bool allowLongInput   = input.bool(true, 'Allow Longs', group = TRADE_GROUP)
+bool allowShortInput  = input.bool(true, 'Allow Shorts', group = TRADE_GROUP)
+float qtyInput        = input.float(1, 'Contracts per Unit', minval = 0.000001, group = TRADE_GROUP)
+int maxAddsInput      = input.int(3, 'Max No-Wick Adds per Leg', minval = 0, maxval = 3, group = TRADE_GROUP, tooltip = 'Adds allowed after the SuperTrend flip entry. Raising this above 3 also requires raising pyramiding in the strategy() declaration. Add slots are a high-water mark: a unit stopped out does not refund its slot.')
+
+string RISK_GROUP     = 'Risk (per unit)'
+float slAtrInput      = input.float(2.0, 'Stop Loss (xATR)', minval = 0.1, step = 0.1, group = RISK_GROUP)
+float tpAtrInput      = input.float(3.0, 'Take Profit (xATR)', minval = 0.1, step = 0.1, group = RISK_GROUP)
+
+string VISUAL_GROUP   = 'Visualization'
+bool showLabelsInput  = input.bool(true, 'Show Flip Labels', group = VISUAL_GROUP)
+bool showFillsInput   = input.bool(true, 'Show Gradient Fills', group = VISUAL_GROUP)
+bool showWicksInput   = input.bool(true, 'Show No-Wick Triangles', group = VISUAL_GROUP)
+bool showCompInput    = input.bool(true, 'Show Compensation Lines', group = VISUAL_GROUP)
+int compBarsInput     = input.int(20, 'Compensation Line Length (bars)', minval = 1, group = VISUAL_GROUP, tooltip = 'Horizontal extent of the orange open-price line. The original script used timeframe.multiplier here, which gives 1 bar on 1m and 1D but 240 bars on 4H. This is visual only under the current exit mode.')
+int compWidthInput    = input.int(1, 'Compensation Line Width (px)', minval = 1, maxval = 4, group = VISUAL_GROUP, tooltip = 'Pixel thickness only. Has no effect on any calculation or signal.')
+bool showCompTxtInput = input.bool(false, 'Label Compensation Lines', group = VISUAL_GROUP)
+
+//---------------------------------------------------------------------------------------------------------------------}
+// Core Calculations
+//---------------------------------------------------------------------------------------------------------------------{
+float atr = ta.atr(lengthInput)
+
+var float stBand = na
+var int trend    = 1 // 1 for Bull, -1 for Bear
+
+float src       = hl2
+float upperBase = src + multiplierInput * atr
+float lowerBase = src - multiplierInput * atr
+
+float prevBand = nz(stBand[1], trend == 1 ? lowerBase : upperBase)
+
+bool isNoisy = math.abs(close - prevBand) < (atr * thresholdInput)
+
+if trend == 1
+    if isNoisy
+        stBand := prevBand - (atr * alphaInput)
+    else
+        stBand := math.max(lowerBase, prevBand)
+
+    if close < stBand
+        trend  := -1
+        stBand := upperBase
+else
+    if isNoisy
+        stBand := prevBand + (atr * alphaInput)
+    else
+        stBand := math.min(upperBase, prevBand)
+
+    if close > stBand
+        trend  := 1
+        stBand := lowerBase
+
+bool trendChanged = trend != trend[1]
+
+// No-wick detection. The open-side wick is the one that must be absent.
+float tol = tickTolInput * syminfo.mintick
+bool bullNoWick = close > open and (open - low) <= tol
+bool bearNoWick = close < open and (high - open) <= tol
+
+//---------------------------------------------------------------------------------------------------------------------}
+// Signals
+//---------------------------------------------------------------------------------------------------------------------{
+bool tradeable = not na(atr) and bar_index > lengthInput
+
+var int legId    = 0
+var int addsUsed = 0
+
+if trendChanged
+    legId    += 1
+    addsUsed := 0
+
+float slDist = atr * slAtrInput
+float tpDist = atr * tpAtrInput
+
+bool flipLong  = tradeable and trendChanged and trend ==  1 and allowLongInput
+bool flipShort = tradeable and trendChanged and trend == -1 and allowShortInput
+
+// Adds require an already-open position in the trend direction, so a no-wick bar can
+// never initiate a leg on its own. The not-trendChanged guard matters because
+// strategy.position_size on the flip bar still reports the previous leg.
+bool addLong  = tradeable and not trendChanged and trend ==  1 and bullNoWick and not isNoisy and strategy.position_size > 0 and addsUsed < maxAddsInput
+bool addShort = tradeable and not trendChanged and trend == -1 and bearNoWick and not isNoisy and strategy.position_size < 0 and addsUsed < maxAddsInput
+
+//---------------------------------------------------------------------------------------------------------------------}
+// Orders
+//---------------------------------------------------------------------------------------------------------------------{
+// Brackets are anchored to the signal bar's close, not the fill price. With default
+// fill-at-next-open the two differ by one bar's gap.
+if trendChanged and strategy.position_size != 0
+    strategy.close_all(comment = "ST Flip", alert_message = "FLAT: SuperTrend flipped to " + (trend == 1 ? "BULL" : "BEAR"))
+
+if flipLong
+    string idL = "L" + str.tostring(legId) + ".0"
+    strategy.entry(idL, strategy.long, qty = qtyInput, comment = "Flip L", alert_message = "LONG " + str.tostring(qtyInput) + " @ market | SuperTrend flip bull")
+    strategy.exit(idL + "x", from_entry = idL, stop = close - slDist, limit = close + tpDist, comment_loss = "SL", comment_profit = "TP", alert_message = "CLOSE LONG unit " + idL)
+
+if flipShort
+    string idS = "S" + str.tostring(legId) + ".0"
+    strategy.entry(idS, strategy.short, qty = qtyInput, comment = "Flip S", alert_message = "SHORT " + str.tostring(qtyInput) + " @ market | SuperTrend flip bear")
+    strategy.exit(idS + "x", from_entry = idS, stop = close + slDist, limit = close - tpDist, comment_loss = "SL", comment_profit = "TP", alert_message = "CLOSE SHORT unit " + idS)
+
+if addLong
+    addsUsed += 1
+    string idAL = "L" + str.tostring(legId) + "." + str.tostring(addsUsed)
+    strategy.entry(idAL, strategy.long, qty = qtyInput, comment = "Add L" + str.tostring(addsUsed), alert_message = "ADD LONG " + str.tostring(qtyInput) + " @ market | no-wick unit " + str.tostring(addsUsed))
+    strategy.exit(idAL + "x", from_entry = idAL, stop = close - slDist, limit = close + tpDist, comment_loss = "SL", comment_profit = "TP", alert_message = "CLOSE LONG unit " + idAL)
+
+if addShort
+    addsUsed += 1
+    string idAS = "S" + str.tostring(legId) + "." + str.tostring(addsUsed)
+    strategy.entry(idAS, strategy.short, qty = qtyInput, comment = "Add S" + str.tostring(addsUsed), alert_message = "ADD SHORT " + str.tostring(qtyInput) + " @ market | no-wick unit " + str.tostring(addsUsed))
+    strategy.exit(idAS + "x", from_entry = idAS, stop = close + slDist, limit = close - tpDist, comment_loss = "SL", comment_profit = "TP", alert_message = "CLOSE SHORT unit " + idAS)
+
+//---------------------------------------------------------------------------------------------------------------------}
+// Visuals
+//---------------------------------------------------------------------------------------------------------------------{
+color stColor = trend == 1 ? BULL_COLOR : BEAR_COLOR
+
+plot(trendChanged ? stBand : na, "Trend Switch Dot", color = stColor, style = plot.style_circles, linewidth = 4, join = false)
+
+plotId = plot(stBand, "Band for Fill", color = na)
+plot(isNoisy ? na : stBand, "Solid Band", color = stColor, linewidth = 2, style = plot.style_linebr)
+plot(isNoisy ? stBand : na, "Dotted Band", color = stColor, linewidth = 2, style = plot.style_linebr, linestyle = plot.linestyle_dotted)
+
+srcId = plot(src, "Source", color = na)
+
+float topValue        = math.max(src, stBand)
+float bottomValue     = math.min(src, stBand)
+color topFillColor    = trend == 1 ? color.new(BULL_COLOR, 50) : color.new(BEAR_COLOR, 100)
+color bottomFillColor = trend == 1 ? color.new(BULL_COLOR, 100) : color.new(BEAR_COLOR, 50)
+
+fill(plotId, srcId, topValue, bottomValue, topFillColor, bottomFillColor,
+     title   = "Trend Fill",
+     display = showFillsInput ? display.all : display.none)
+
+plotshape(showWicksInput and bullNoWick, "Bullish No Bottom Wick", location = location.belowbar, color = BULL_COLOR, style = shape.triangleup, size = size.tiny)
+plotshape(showWicksInput and bearNoWick, "Bearish No Top Wick", location = location.abovebar, color = BEAR_COLOR, style = shape.triangledown, size = size.tiny)
+
+if showCompInput and (bullNoWick or bearNoWick)
+    line.new(bar_index, open, bar_index + compBarsInput, open, color = COMP_COLOR, width = compWidthInput, style = line.style_solid)
+    if showCompTxtInput
+        label.new(bar_index + compBarsInput + 1, open, "Compensation", style = label.style_label_left, color = COMP_COLOR, textcolor = #FFFFFF, size = size.tiny)
+
+if showLabelsInput and trendChanged
+    label.new(bar_index, stBand,
+         text      = trend == 1 ? "BULL" : "BEAR",
+         color     = stColor,
+         textcolor = #FFFFFF,
+         style     = trend == 1 ? label.style_label_up : label.style_label_down,
+         size      = size.tiny)
+
+//---------------------------------------------------------------------------------------------------------------------}

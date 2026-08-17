@@ -1,0 +1,25 @@
+//@version=5
+indicator("No Wick Candlestick Identifier", overlay=true)
+
+// Function to check for bullish candles with no bottom wick
+bullishNoBottomWick = open == low and close > open
+
+// Function to check for bearish candles with no top wick
+bearishNoTopWick = open == high and close < open
+
+// Plot triangles below bullish candles with no bottom wick
+plotshape(series=bullishNoBottomWick, location=location.belowbar, color=color.green, style=shape.triangleup, size=size.small, title="Bullish No Bottom Wick")
+
+// Plot triangles above bearish candles with no top wick
+plotshape(series=bearishNoTopWick, location=location.abovebar, color=color.red, style=shape.triangledown, size=size.small, title="Bearish No Top Wick")
+
+// Calculate number of bars to the right based on timeframe
+barsToRight = timeframe.multiplier
+
+// Draw lines from opening price to the right edge of the screen for candles with no wicks
+if bullishNoBottomWick or bearishNoTopWick
+    line.new(x1 = bar_index, y1 = open, x2 = bar_index + barsToRight, y2 = open, color=color.rgb(255, 174, 53, 5), width=1, style=line.style_solid)
+
+// Add label to display "Compensation" next to the line
+if bullishNoBottomWick or bearishNoTopWick
+    label.new(x = bar_index + barsToRight + 1, y = open, text = "Compensation", style = label.style_label_left, color = color.rgb(255, 174, 53, 5), size = size.small)

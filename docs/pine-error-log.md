@@ -112,6 +112,157 @@ the lower pane — pass `force_overlay=true` to `table.new(...)` if you need it 
 
 ---
 
+### Function scope: what a Pine function may and may not touch
+
+Three separate rules, easy to conflate. All three shaped the ORB Algo rewrite: the
+natural first draft violated rules 1 and 3, and rule 2 is what made the clean version
+possible. Recorded here as constraints designed around, not as observed compiler output.
+
+**1. A function may NOT reassign a `var` global.**
+
+```pinescript
+var bool inTrade = false
+
+// ❌ WRONG - cannot assign to a global from inside a function
+resetState() =>
+    inTrade := false
+```
+
+Inline the assignments at each call site, or restructure so the function *returns*
+the new value and the caller assigns it.
+
+**2. A function MAY mutate the fields of an object passed into it.**
+
+UDT instances are references, so this is legal and is the escape hatch for rule 1.
+Pass state around as an object instead of as loose globals:
+
+```pinescript
+type Trade
+    float realizedPct = 0.0
+    bool  isClosed    = false
+
+// ✅ CORRECT - mutating fields of the argument, not reassigning a global
+bookLeg(Trade t, float exitPx) =>
+    t.realizedPct := t.realizedPct + exitPx
+    t.isClosed := true
+    true            // last expression is the return value
+```
+
+**3. A function may NOT be DECLARED inside a local scope.**
+
+Declaring a helper inside `if barstate.islast` is a compile error, even though it
+looks like a natural place for a table-row writer. Hoist it to global scope and
+pass the things it needs as arguments:
+
+```pinescript
+// ❌ WRONG - declaration inside a local scope
+if barstate.islast
+    var table t = table.new(position.top_right, 2, 5)
+    row(int r, string k, string v) =>
+        table.cell(t, 0, r, k)
+
+// ✅ CORRECT - global declaration, table passed in
+var table t = table.new(position.top_right, 2, 5)
+row(table tbl, int r, string k, string v) =>
+    table.cell(tbl, 0, r, k)
+    table.cell(tbl, 1, r, v)
+
+if barstate.islast
+    row(t, 1, "Wins", "12")
+```
+
+---
+
+### `int / int` division is fractional in v6 - do NOT work around it
+
+Worth stating because the "integer division truncates" instinct is wrong here and
+leads to pointless `1.0 *` prefixes, or worse, to misdiagnosing a correct winrate
+calculation as broken.
+
+In v5, `int/int` truncated when **both** operands were `const` (`5/2 == 2`) but kept
+the remainder if either was `input`/`simple`/`series` (`5/2 == 2.5`). **v6 removed
+the inconsistency: fractional division of constants now works too.**
+
+```pinescript
+//@version=6
+int wins = 3, int losses = 7
+winrate = 100.0 * wins / (wins + losses)   // 30, not 0 - no cast needed
+```
+
+Division by zero yields `na`, so guard the denominator and print `"n/a"` rather
+than letting `str.tostring()` render `NaN`.
+
+See `docs/docs/migration-guides/to-pine-version-6.md` → "Fractional division of constants".
+
+---
+
+### Per-unit brackets under pyramiding need unique entry IDs + `from_entry`
+
+Building a scale-in strategy (SuperTrend flip entry plus no-wick adds), each unit needed
+its own ATR stop and target. Three things all have to be right or the feature ships dead
+or silently wrong:
+
+**1. `pyramiding` defaults to 0.** Every add after the first is discarded with no error,
+no warning, and no marker on the chart. Set it in the declaration:
+
+```pinescript
+strategy("...", pyramiding = 4)   // 1 flip entry + 3 adds
+```
+
+**2. One `strategy.exit` per unit, bound with `from_entry`, IDs must be unique.**
+`strategy.exit` called once creates a persistent resting order; it does not need
+re-calling every bar. Recycling slot IDs across legs (`"L1".."L4"`) is a constraint
+designed around here rather than observed failing: an ID reused while the strategy still
+tracks it can fold two intended-independent brackets together, and unique IDs cost
+nothing. Use a monotonic leg counter:
+
+```pinescript
+var int legId = 0
+if trendChanged
+    legId += 1
+
+string id = "L" + str.tostring(legId) + ".0"
+strategy.entry(id, strategy.long, qty = qtyInput)
+strategy.exit(id + "x", from_entry = id, stop = close - slDist, limit = close + tpDist)
+```
+
+**3. Snapshot the ATR at entry.** Placing the exit once at entry time with absolute
+prices freezes the bracket. The tempting alternative - looping over
+`strategy.opentrades` every bar and re-calling `strategy.exit` with `atr * mult` - turns
+a fixed bracket into a trailing one, because `atr` moves every bar.
+
+**Verification that actually discriminates:** find a leg where all units filled and
+confirm the trade list shows that many separate exits at different prices. "It compiles"
+proves nothing here.
+
+**Related ordering gotcha:** on a flip bar, `strategy.position_size` still reports the
+*previous* leg, because nothing has filled yet. Gating adds on `not trendChanged` is
+load-bearing, not cosmetic. Call `strategy.close_all()` before the new `strategy.entry()`
+on that bar.
+
+---
+
+### `timeframe.multiplier` is a bad choice for a drawing's horizontal extent
+
+Seen in the "No Wick Candlestick Identifier" indicator, which extended its compensation
+line with `x2 = bar_index + timeframe.multiplier`.
+
+`timeframe.multiplier` is the numeric part of the timeframe string, not a duration. So
+the extent is 1 bar on 1m, 5 on 5m, 60 on 1H, 240 on 4H, then back to **1** on 1D and 1W.
+The visual meaning collapses at daily and above and explodes on 4H.
+
+Expose an explicit bar count instead:
+
+```pinescript
+int compBarsInput = input.int(20, 'Line Length (bars)', minval = 1)
+line.new(bar_index, open, bar_index + compBarsInput, open, ...)
+```
+
+Also worth stating plainly when a user asks: `width` on `line.new` / `linewidth` on
+`plot` is pixel thickness only. It never affects a value, a comparison, or a signal.
+
+---
+
 ## Warnings (non-fatal, but fix them)
 
 ### "The function `<name>` should be called on each calculation for consistency"
@@ -155,4 +306,5 @@ in `©`/`™`/em-dash/emoji.
 
 ---
 
-_Last updated: 2026-07-23 — added homoglyph gotcha from the ICT Silver Bullet indicator build._
+_Last updated: 2026-08-17 - added pyramiding/per-unit-bracket rules and the
+`timeframe.multiplier` drawing-extent note from the Evasive SuperTrend + No-Wick build._

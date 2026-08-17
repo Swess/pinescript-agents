@@ -1,0 +1,586 @@
+// built with PineScript Agents by TradersPost
+//@version=6
+// ===========================================================================
+// ORB Algo Strategy - auditable port with the full visual layer
+// ---------------------------------------------------------------------------
+// Derived from "ORB Algo | Flux Charts" (© fluxchart), licensed under the
+// Mozilla Public License 2.0 (https://mozilla.org/MPL/2.0/). This derivative
+// remains under MPL-2.0.
+//
+// ONE SCRIPT, ONE LEDGER
+// Pine allows a single indicator()/strategy() declaration per file, so the
+// visuals and the accounting live together here. The Strategy Tester is the
+// ledger. There is deliberately NO custom backtest table: a second, hand-rolled
+// accounting path is exactly what made the original untrustworthy.
+//
+// WHY THE ORIGINAL'S NUMBERS WERE WRONG
+//   1. Dynamic-mode take profits were booked AT the EMA, on the very bar whose
+//      close had crossed to the wrong side of it. That price was not fillable.
+//   2. Session-end flat exits were always subtracted as losses, because the
+//      P&L helper ran the exit-vs-entry distance through math.abs().
+//   3. Wins, losses, "Total Days" and average profit used three different
+//      denominators, and on two of the seven exit-ratio presets one trade could
+//      increment both the win and the loss counter.
+//   4. A bar containing both a take-profit and a stop level resolved in the
+//      take-profit's favour.
+// Here the broker emulator prices every fill and counts every trade, so none of
+// those failure modes are reachable.
+//
+// ENTRY LOGIC - unchanged from the original
+//   - A new opening range starts at the first bar of the regular session (or of
+//     a custom session), and collects high/low for "ORB Timeframe" minutes.
+//   - A breakout is the close (or the EMA) trading beyond that range.
+//   - A breakout that closes back inside the range is discarded, and the script
+//     waits for the next one.
+//   - A retest is a bar that closes beyond the level but wicks back to it.
+//     Sensitivity sets how many retests are required: High 0, Medium 1,
+//     Low 2, Lowest 3.
+//   - One entry per session, maximum.
+//
+// FILL MODEL - read before comparing against the original indicator
+//   - Entries and Dynamic take profits are market orders, so they fill at the
+//     NEXT bar's open, not at the signal bar's close. This is why results look
+//     worse than a close-fill indicator. It is also why they are believable.
+//   - ATR take profits and every stop are real limit/stop orders, priced by the
+//     broker emulator, which resolves same-bar ordering with its own
+//     assumptions rather than in the trade's favour.
+//   - Commission and slippage default to zero because they are
+//     instrument-specific. SET THEM in the Properties tab before believing any
+//     result. Nothing else in this file will remind you.
+//
+// SAMPLE SIZE
+//   The chart timeframe caps loaded history, so expect tens of trades, not
+//   hundreds. At 40 closed trades a true 50% winrate still prints anywhere in
+//   the 34-66% band at 95% confidence. Read the Tester with that in mind.
+//
+// ALERT NOTE (TradersPost)
+//   In ATR mode each take-profit leg carries its own stop order at the same
+//   price, which is the documented Pine idiom for scaled exits. A stop hit
+//   therefore emits one partial-exit alert per open leg. The stop payload uses
+//   sentiment "flat", so the first alert flattens and the rest are no-ops.
+//   Verify the partial-exit payload shape against current TradersPost docs
+//   before going live.
+// ===========================================================================
+
+strategy("[TradersPost] ORB Algo Strategy",
+     shorttitle="ORB Algo",
+     overlay=true,
+     default_qty_type=strategy.fixed,
+     default_qty_value=1,
+     pyramiding=0,
+     initial_capital=100000,
+     commission_type=strategy.commission.percent,
+     commission_value=0.0,
+     slippage=0,
+     calc_on_every_tick=false,
+     process_orders_on_close=false,
+     max_labels_count=200)
+//@strategy_alert_message {{strategy.order.alert_message}}
+
+// ===========================================================================
+// INPUTS
+// ===========================================================================
+
+algoGroup = "Algorithm"
+orbTimeStr = input.timeframe("30", "ORB Timeframe",
+     tooltip="Length of the opening range measured from the session's first bar. Must be larger than the chart timeframe.",
+     group=algoGroup)
+sensitivity = input.string("Medium", "Sensitivity", options=["High", "Medium", "Low", "Lowest"],
+     tooltip="Retests required before an entry is taken. High 0, Medium 1, Low 2, Lowest 3.",
+     group=algoGroup)
+breakoutCondition = input.string("Close", "Breakout Condition", options=["Close", "EMA"],
+     tooltip="Which series must trade beyond the range to count as a breakout.",
+     group=algoGroup)
+tpMethod = input.string("Dynamic", "TP Method", options=["Dynamic", "ATR"],
+     tooltip="Dynamic trails the EMA and exits at market when price closes back through it. ATR uses three fixed limit orders.",
+     group=algoGroup)
+emaLength = input.int(9, "EMA Length", options=[4, 9, 13, 20, 34],
+     tooltip="EMA of hl2 used for the EMA breakout condition and for Dynamic take profits.",
+     group=algoGroup)
+slMethod = input.string("Balanced", "Stop-Loss", options=["Safer", "Balanced", "Risky", "Fixed %"],
+     tooltip="Safer, Balanced and Risky place the stop relative to the range midpoint. Fixed % uses a percentage of the fill price.",
+     group=algoGroup)
+adaptiveSL = input.bool(true, "Adaptive SL",
+     tooltip="Move the stop to break-even once the first take profit fills.",
+     group=algoGroup)
+stopLossPercent = input.float(1.0, "Fixed Stop-Loss %", minval=0.01, step=0.05,
+     tooltip="Only used when Stop-Loss is set to Fixed %.",
+     group=algoGroup)
+
+dynGroup = "Dynamic TP Thresholds"
+minimumProfitPercent = input.float(0.20, "Minimum Profit % (TP1)", minval=0.0, step=0.05,
+     tooltip="Dynamic mode only. Distance the EMA must travel past the fill price before TP1 can trigger. This is a raw percentage, so it is not instrument-neutral: 0.2% is large on FX and small on crypto.",
+     group=dynGroup)
+minimumProfitIncrementPercent = input.float(0.075, "Minimum Increment % (TP2/TP3)", minval=0.0, step=0.025,
+     tooltip="Dynamic mode only. Extra distance required beyond the previous take profit.",
+     group=dynGroup)
+
+atrGroup = "ATR TP Multipliers"
+atrTP1Mult = input.float(0.75, "TP1 x ATR", minval=0.05, step=0.05, group=atrGroup)
+atrTP2Mult = input.float(1.5, "TP2 x ATR", minval=0.05, step=0.05, group=atrGroup)
+atrTP3Mult = input.float(2.25, "TP3 x ATR", minval=0.05, step=0.05, group=atrGroup)
+atrTotalMult = input.float(1.0, "Global x ATR", minval=0.05, step=0.05, group=atrGroup)
+atrLength = input.int(12, "ATR Length", minval=1, group=atrGroup)
+
+sessGroup = "Custom Session"
+customSessionEnabled = input.bool(false, "Enabled", group=sessGroup)
+customSessionTime = input.session("1000-1100", "Session",
+     tooltip="When enabled, the opening range starts at the first bar of this window instead of the regular session open.",
+     group=sessGroup)
+
+sizeGroup = "Position Sizing"
+qtyTotal = input.float(100, "Position Size (units)", minval=0.000001,
+     tooltip="Units entered per trade. The exit ratios split this figure, so 100 makes every preset land on whole units.",
+     group=sizeGroup)
+exitRatios = input.string("90% | 5% | 5%", "Exit Ratios",
+     options=["75% | 15% | 10%", "50% | 25% | 25%", "34% | 33% | 33%", "90% | 5% | 5%", "100% | 0% | 0%", "0% | 100% | 0%", "0% | 0% | 100%"],
+     tooltip="Share of the position closed at TP1 | TP2 | TP3.",
+     group=sizeGroup)
+
+dashGroup = "ORB Dashboard"
+dashEnabled = input.bool(true, "Enabled", group=dashGroup)
+dashLocation = input.string("Top Right", "Position", options=["Top Right", "Right Center", "Top Center"], group=dashGroup)
+
+visGroup = "Visuals"
+showORBZones = input.bool(true, "Draw ORB Zones", group=visGroup, inline="v1")
+plotEMA = input.bool(false, "Plot EMA", group=visGroup, inline="v1")
+showLevels = input.bool(true, "Draw Stop / Target Levels", group=visGroup, inline="v2")
+showMarkers = input.bool(true, "Draw Trade Markers", group=visGroup, inline="v2")
+highColor = input.color(color.green, "High", inline="colors", group=visGroup)
+lowColor = input.color(color.red, "Low", inline="colors", group=visGroup)
+
+alertGroup = "Alerts (TradersPost)"
+tpTicker = input.string("{{ticker}}", "Ticker field",
+     tooltip="Symbol sent in the TradersPost webhook. Leave as {{ticker}} to use the chart symbol.",
+     group=alertGroup)
+tpQtyField = input.string("", "Entry quantity field (optional)",
+     tooltip="Optional 'quantity' value for entry webhooks. Leave blank to let TradersPost use the connection's default sizing.",
+     group=alertGroup)
+
+// ===========================================================================
+// GUARDS
+// ===========================================================================
+
+if timeframe.in_seconds() > timeframe.in_seconds("60")
+    runtime.error("ORB Algo works on chart timeframes up to 1H.")
+
+if timeframe.in_seconds(orbTimeStr) <= timeframe.in_seconds()
+    runtime.error("ORB Timeframe must be larger than the chart timeframe.")
+
+// ===========================================================================
+// HELPERS
+// ===========================================================================
+
+signedPct(float entryPrice, float exitPrice, bool isBullish) =>
+    raw = isBullish ? exitPrice - entryPrice : entryPrice - exitPrice
+    raw / entryPrice * 100.0
+
+getPosition(string positionText) =>
+    if positionText == "Top Right"
+        position.top_right
+    else if positionText == "Top Center"
+        position.top_center
+    else if positionText == "Right Center"
+        position.middle_right
+    else
+        position.middle_left
+
+fmtPct(float v) =>
+    na(v) ? "n/a" : str.tostring(v, "#.##") + "%"
+
+// Pine forbids declaring functions inside a local scope, so the table row
+// writer lives here and takes the table as an argument.
+row(table tbl, int r, string k, string v, color vcol) =>
+    table.cell(tbl, 0, r, k, text_color=color.white, bgcolor=#3b3b3b43, text_size=size.small)
+    table.cell(tbl, 1, r, v, text_color=vcol, bgcolor=#3b3b3b43, text_size=size.small)
+
+// ===========================================================================
+// DERIVED CONSTANTS
+// ===========================================================================
+
+retestsNeededForEntry = sensitivity == "High" ? 0 : sensitivity == "Medium" ? 1 : sensitivity == "Low" ? 2 : 3
+
+ratioParts = str.split(exitRatios, " | ")
+r1 = str.tonumber(str.replace(array.get(ratioParts, 0), "%", "")) / 100.0
+r2 = str.tonumber(str.replace(array.get(ratioParts, 1), "%", "")) / 100.0
+r3 = str.tonumber(str.replace(array.get(ratioParts, 2), "%", "")) / 100.0
+
+leg1Qty = qtyTotal * r1
+leg2Qty = qtyTotal * r2
+leg3Qty = qtyTotal * r3
+residQty = math.max(0.0, qtyTotal - (leg1Qty + leg2Qty + leg3Qty))
+
+panelColor = #3b3b3b43
+
+// ===========================================================================
+// ALERT PAYLOADS
+// ===========================================================================
+
+entryQtyField = tpQtyField == "" ? "" : ",\"quantity\":" + tpQtyField
+buyMsg = "{\"ticker\":\"" + tpTicker + "\",\"action\":\"buy\",\"sentiment\":\"long\"" + entryQtyField + "}"
+sellMsg = "{\"ticker\":\"" + tpTicker + "\",\"action\":\"sell\",\"sentiment\":\"short\"" + entryQtyField + "}"
+flatMsg = "{\"ticker\":\"" + tpTicker + "\",\"action\":\"sell\",\"sentiment\":\"flat\"}"
+flatMsgShort = "{\"ticker\":\"" + tpTicker + "\",\"action\":\"buy\",\"sentiment\":\"flat\"}"
+
+partialMsg(bool isBull, float q) =>
+    action = isBull ? "sell" : "buy"
+    sentiment = isBull ? "long" : "short"
+    "{\"ticker\":\"" + tpTicker + "\",\"action\":\"" + action + "\",\"sentiment\":\"" + sentiment + "\",\"quantity\":" + str.tostring(q, "#.########") + "}"
+
+// ===========================================================================
+// SERIES - must be computed every bar
+// ===========================================================================
+
+ema = ta.ema(hl2, emaLength)
+atr = ta.atr(atrLength)
+
+sessionBegins(simple string sess) =>
+    t = time("1440", sess)
+    na(t[1]) and not na(t) or t[1] < t
+
+customStart = sessionBegins(customSessionTime)
+newSession = customSessionEnabled ? customStart : session.isfirstbar_regular
+
+// ===========================================================================
+// STATE
+// ===========================================================================
+
+var float orbHigh = na
+var float orbLow = na
+var int orbStartTime = na
+var string orbState = "None"          // None | Opening Range | Waiting | In Breakout | Done
+
+var bool breakoutBull = false
+var int breakoutStartIndex = na
+var int retests = 0
+
+var bool tradedThisSession = false
+var bool awaitingFill = false
+var bool pendingBull = false
+var float pendingATR = na
+
+var bool inTrade = false
+var bool tradeBull = false
+var float fillPrice = na
+var float tradeATR = na
+var float slPrice = na
+var float issuedSL = na
+
+var float tp1Price = na
+var float tp2Price = na
+var float tp3Price = na
+var bool leg1Done = false
+var bool leg2Done = false
+var bool leg3Done = false
+var int legsFilled = 0
+var float lastTPRef = na              // Dynamic mode: price the next increment is measured from
+
+// Per-bar markers. Trade state is cleared inline everywhere it is needed,
+// because Pine functions cannot assign to `var` globals.
+bool tickTP = false
+bool tickSL = false
+bool tickFlat = false
+
+// ===========================================================================
+// SESSION ROLLOVER - flatten, then open a fresh range
+// ===========================================================================
+
+if newSession
+    if strategy.position_size != 0
+        strategy.close_all(comment="Session End", alert_message=strategy.position_size > 0 ? flatMsg : flatMsgShort)
+        tickFlat := true
+    inTrade := false
+    awaitingFill := false
+    fillPrice := na
+    tradeATR := na
+    slPrice := na
+    issuedSL := na
+    tp1Price := na
+    tp2Price := na
+    tp3Price := na
+    lastTPRef := na
+    leg1Done := false
+    leg2Done := false
+    leg3Done := false
+    legsFilled := 0
+    orbHigh := na
+    orbLow := na
+    orbStartTime := time
+    orbState := "Opening Range"
+    breakoutStartIndex := na
+    retests := 0
+    tradedThisSession := false
+
+// ===========================================================================
+// OPENING RANGE
+// ===========================================================================
+
+if orbState == "Opening Range"
+    if time < orbStartTime + timeframe.in_seconds(orbTimeStr) * 1000
+        if na(orbHigh)
+            orbHigh := high
+            orbLow := low
+        else
+            orbHigh := math.max(orbHigh, high)
+            orbLow := math.min(orbLow, low)
+    else
+        orbState := "Waiting"
+
+float orbCenter = na
+if not na(orbHigh)
+    orbCenter := (orbHigh + orbLow) / 2.0
+
+// ===========================================================================
+// BREAKOUT DETECTION
+// ===========================================================================
+
+conditionPrice = breakoutCondition == "EMA" ? ema : close
+
+if orbState == "Waiting" and not na(orbHigh)
+    if conditionPrice > orbHigh or conditionPrice < orbLow
+        breakoutBull := conditionPrice > orbHigh
+        breakoutStartIndex := bar_index
+        retests := 0
+        orbState := "In Breakout"
+
+// ===========================================================================
+// BREAKOUT MANAGEMENT AND ENTRY TRIGGER
+// ===========================================================================
+
+bool takeEntry = false
+
+if orbState == "In Breakout"
+    stillOut = breakoutBull ? close > orbHigh : close < orbLow
+    if not stillOut
+        // Closed back inside the range. Discard this breakout.
+        orbState := "Waiting"
+    else
+        wickedBack = breakoutBull ? low <= orbHigh : high >= orbLow
+        if bar_index > breakoutStartIndex and wickedBack
+            retests := retests + 1
+        if retests >= retestsNeededForEntry
+            takeEntry := true
+            orbState := "Done"
+            tradedThisSession := true
+
+if takeEntry
+    pendingBull := breakoutBull
+    pendingATR := atr
+    awaitingFill := true
+    if breakoutBull
+        strategy.entry("ORB", strategy.long, qty=qtyTotal, comment="ORB Long", alert_message=buyMsg)
+    else
+        strategy.entry("ORB", strategy.short, qty=qtyTotal, comment="ORB Short", alert_message=sellMsg)
+
+// ===========================================================================
+// FILL CAPTURE - levels are computed from the ACTUAL fill, not the signal close
+// ===========================================================================
+
+if awaitingFill and strategy.position_size != 0
+    awaitingFill := false
+    inTrade := true
+    tradeBull := pendingBull
+    fillPrice := strategy.position_avg_price
+    tradeATR := pendingATR
+    lastTPRef := fillPrice
+
+    if slMethod == "Fixed %"
+        slPrice := tradeBull ? fillPrice * (1.0 - stopLossPercent / 100.0) : fillPrice * (1.0 + stopLossPercent / 100.0)
+    else if slMethod == "Safer"
+        slPrice := tradeBull ? (orbCenter + orbHigh) / 2.0 : (orbCenter + orbLow) / 2.0
+    else if slMethod == "Balanced"
+        slPrice := orbCenter
+    else
+        slPrice := tradeBull ? (orbCenter + orbLow) / 2.0 : (orbCenter + orbHigh) / 2.0
+
+    dir = tradeBull ? 1 : -1
+    if tpMethod == "ATR"
+        tp1Price := fillPrice + tradeATR * atrTP1Mult * atrTotalMult * dir
+        tp2Price := fillPrice + tradeATR * atrTP2Mult * atrTotalMult * dir
+        tp3Price := fillPrice + tradeATR * atrTP3Mult * atrTotalMult * dir
+
+    // Legs with a zero ratio are retired immediately so they cannot stall the
+    // Dynamic-mode chain, which advances one leg at a time.
+    if leg1Qty <= 0
+        leg1Done := true
+    if leg2Qty <= 0
+        leg2Done := true
+    if leg3Qty <= 0
+        leg3Done := true
+
+    // A geometric stop can land on the wrong side of the fill after a gap.
+    // Flatten rather than hold an inverted or missing bracket.
+    if na(slPrice) or (tradeBull and slPrice >= fillPrice) or (not tradeBull and slPrice <= fillPrice)
+        strategy.close_all(comment="Invalid Stop", alert_message=tradeBull ? flatMsg : flatMsgShort)
+        inTrade := false
+        fillPrice := na
+        slPrice := na
+        issuedSL := na
+        tp1Price := na
+        tp2Price := na
+        tp3Price := na
+
+// The emulator fills a stop intrabar, so the touch and the flat position land on
+// the same bar. Detect the touch here, before the state is cleared below.
+if inTrade and not na(slPrice)
+    if tradeBull ? low <= slPrice : high >= slPrice
+        tickSL := true
+
+// Position closed by the emulator (stop, final target, or manual flatten).
+// `tradeBull` is deliberately NOT cleared: the exit markers below still need the
+// direction of the trade that just closed on this bar.
+if inTrade and strategy.position_size == 0
+    inTrade := false
+    fillPrice := na
+    tradeATR := na
+    slPrice := na
+    issuedSL := na
+    tp1Price := na
+    tp2Price := na
+    tp3Price := na
+    lastTPRef := na
+    leg1Done := false
+    leg2Done := false
+    leg3Done := false
+    legsFilled := 0
+
+// ===========================================================================
+// DYNAMIC TAKE PROFITS - market exits, so they fill at the next bar's open
+// ===========================================================================
+
+if inTrade and tpMethod == "Dynamic"
+    emaBeyondFill = tradeBull ? ema > fillPrice : ema < fillPrice
+    emaProfitPct = math.abs(ema - fillPrice) / fillPrice * 100.0
+    crossedBack = tradeBull ? close < ema : close > ema
+
+    // The increment gate is measured from `lastTPRef`, which starts at the fill
+    // price and advances with each leg. Using a per-leg tp*Price instead would
+    // read `na` whenever a preset retires a leg with a 0% ratio.
+    beyondRef = tradeBull ? ema > lastTPRef : ema < lastTPRef
+    incrementPct = math.abs(ema - lastTPRef) / lastTPRef * 100.0
+
+    if emaBeyondFill and crossedBack and emaProfitPct >= minimumProfitPercent
+        if not leg1Done
+            leg1Done := true
+            legsFilled := legsFilled + 1
+            tp1Price := close
+            lastTPRef := close
+            tickTP := true
+            strategy.close("ORB", qty=leg1Qty, comment="TP1", alert_message=partialMsg(tradeBull, leg1Qty))
+            if adaptiveSL
+                slPrice := fillPrice
+        else if not leg2Done and beyondRef and incrementPct >= minimumProfitIncrementPercent
+            leg2Done := true
+            legsFilled := legsFilled + 1
+            tp2Price := close
+            lastTPRef := close
+            tickTP := true
+            strategy.close("ORB", qty=leg2Qty, comment="TP2", alert_message=partialMsg(tradeBull, leg2Qty))
+        else if leg2Done and not leg3Done and beyondRef and incrementPct >= minimumProfitIncrementPercent
+            leg3Done := true
+            legsFilled := legsFilled + 1
+            tp3Price := close
+            lastTPRef := close
+            tickTP := true
+            strategy.close("ORB", qty=leg3Qty, comment="TP3", alert_message=partialMsg(tradeBull, leg3Qty))
+
+// ===========================================================================
+// ATR TAKE PROFITS - real limit orders; the emulator resolves same-bar order
+// ===========================================================================
+
+if inTrade and tpMethod == "ATR"
+    if not leg1Done and (tradeBull ? high >= tp1Price : low <= tp1Price)
+        leg1Done := true
+        legsFilled := legsFilled + 1
+        tickTP := true
+        if adaptiveSL
+            slPrice := fillPrice
+    if leg1Done and not leg2Done and (tradeBull ? high >= tp2Price : low <= tp2Price)
+        leg2Done := true
+        legsFilled := legsFilled + 1
+        tickTP := true
+    if leg2Done and not leg3Done and (tradeBull ? high >= tp3Price : low <= tp3Price)
+        leg3Done := true
+        legsFilled := legsFilled + 1
+        tickTP := true
+
+// ===========================================================================
+// BRACKET MAINTENANCE
+// Orders are only re-issued when the stop level actually moves, and never for a
+// leg that has already filled - re-issuing a filled exit id would create a
+// second order for that quantity.
+// ===========================================================================
+
+if inTrade and not na(slPrice)
+    slChanged = na(issuedSL) or slPrice != issuedSL
+    if slChanged
+        issuedSL := slPrice
+        if tpMethod == "ATR"
+            if leg1Qty > 0 and not leg1Done
+                strategy.exit("TP1", from_entry="ORB", qty=leg1Qty, limit=tp1Price, stop=slPrice, comment_profit="TP1", comment_loss="SL", alert_profit=partialMsg(tradeBull, leg1Qty), alert_loss=tradeBull ? flatMsg : flatMsgShort)
+            if leg2Qty > 0 and not leg2Done
+                strategy.exit("TP2", from_entry="ORB", qty=leg2Qty, limit=tp2Price, stop=slPrice, comment_profit="TP2", comment_loss="SL", alert_profit=partialMsg(tradeBull, leg2Qty), alert_loss=tradeBull ? flatMsg : flatMsgShort)
+            if leg3Qty > 0 and not leg3Done
+                strategy.exit("TP3", from_entry="ORB", qty=leg3Qty, limit=tp3Price, stop=slPrice, comment_profit="TP3", comment_loss="SL", alert_profit=partialMsg(tradeBull, leg3Qty), alert_loss=tradeBull ? flatMsg : flatMsgShort)
+            if residQty > 0
+                strategy.exit("Stop R", from_entry="ORB", qty=residQty, stop=slPrice, comment_loss="SL", alert_loss=tradeBull ? flatMsg : flatMsgShort)
+        else
+            strategy.exit("Stop", from_entry="ORB", stop=slPrice, comment_loss="SL", alert_loss=tradeBull ? flatMsg : flatMsgShort)
+
+// ===========================================================================
+// VISUALS
+// ORB levels are plotted as series with style_linebr rather than drawn as line
+// objects. Each session's range renders across that session and breaks on the
+// `na` gap while the next range is still forming. That costs no drawing
+// objects, hits no 500-object cap, and needs no per-tick redraw.
+// ===========================================================================
+
+inRange = orbState == "Opening Range"
+zoneReady = showORBZones and not na(orbHigh) and not inRange
+plot(zoneReady ? orbHigh : na, "ORB High", color=highColor, style=plot.style_linebr, linewidth=2)
+plot(zoneReady ? orbLow : na, "ORB Low", color=lowColor, style=plot.style_linebr, linewidth=2)
+plot(plotEMA ? ema : na, "EMA", color=color.new(color.orange, 0))
+
+plot(showLevels and inTrade ? slPrice : na, "Stop", color=color.new(color.red, 0), style=plot.style_linebr, linewidth=1)
+plot(showLevels and inTrade and tpMethod == "ATR" and not leg1Done ? tp1Price : na, "TP1", color=color.new(color.teal, 20), style=plot.style_linebr)
+plot(showLevels and inTrade and tpMethod == "ATR" and not leg2Done ? tp2Price : na, "TP2", color=color.new(color.teal, 40), style=plot.style_linebr)
+plot(showLevels and inTrade and tpMethod == "ATR" and not leg3Done ? tp3Price : na, "TP3", color=color.new(color.teal, 60), style=plot.style_linebr)
+
+plotshape(showMarkers and takeEntry and breakoutBull ? low : na, "Buy Signal", shape.triangleup, location.belowbar, color=color.new(color.green, 0), size=size.tiny, text="Buy", textcolor=color.white)
+plotshape(showMarkers and takeEntry and not breakoutBull ? high : na, "Sell Signal", shape.triangledown, location.abovebar, color=color.new(color.red, 0), size=size.tiny, text="Sell", textcolor=color.white)
+plotshape(showMarkers and tickTP and tradeBull ? high : na, "TP Long", shape.xcross, location.abovebar, color=color.new(color.teal, 0), size=size.tiny, text="TP", textcolor=color.white)
+plotshape(showMarkers and tickTP and not tradeBull ? low : na, "TP Short", shape.xcross, location.belowbar, color=color.new(color.teal, 0), size=size.tiny, text="TP", textcolor=color.white)
+plotshape(showMarkers and tickSL and tradeBull ? low : na, "SL Long", shape.xcross, location.belowbar, color=color.new(color.red, 0), size=size.tiny, text="SL", textcolor=color.white)
+plotshape(showMarkers and tickSL and not tradeBull ? high : na, "SL Short", shape.xcross, location.abovebar, color=color.new(color.red, 0), size=size.tiny, text="SL", textcolor=color.white)
+plotshape(showMarkers and tickFlat ? low : na, "Session Exit", shape.square, location.belowbar, color=color.new(color.gray, 0), size=size.tiny, text="Exit", textcolor=color.white)
+
+alertcondition(takeEntry, title="ORB Entry Signal", message="ORB breakout entry triggered")
+alertcondition(tickTP, title="ORB Take Profit", message="ORB take profit leg triggered")
+alertcondition(tickSL, title="ORB Stop Loss", message="ORB stop level touched")
+
+// ===========================================================================
+// ORB DASHBOARD - live state only. Performance belongs to the Strategy Tester.
+// ===========================================================================
+
+var table dash = dashEnabled ? table.new(getPosition(dashLocation), 2, 7, bgcolor=panelColor, frame_width=2, frame_color=color.black, border_width=1, border_color=color.black) : na
+
+if barstate.islast and dashEnabled
+    table.clear(dash, 0, 0, 1, 6)
+    table.merge_cells(dash, 0, 0, 1, 0)
+    table.cell(dash, 0, 0, "ORB Dashboard", text_color=color.white, bgcolor=panelColor, text_size=size.small)
+
+    rangeText = na(orbHigh) ? "n/a" : str.tostring(orbLow, format.mintick) + " - " + str.tostring(orbHigh, format.mintick)
+    row(dash, 1, "State", orbState, color.white)
+    row(dash, 2, "Range", rangeText, color.white)
+
+    if inTrade
+        livePct = signedPct(fillPrice, close, tradeBull)
+        row(dash, 3, "Direction", tradeBull ? "Long" : "Short", tradeBull ? color.lime : color.red)
+        row(dash, 4, "Fill price", str.tostring(fillPrice, format.mintick), color.white)
+        row(dash, 5, "Stop / legs filled", str.tostring(slPrice, format.mintick) + " / " + str.tostring(legsFilled), color.white)
+        row(dash, 6, "Open P&L (full size)", fmtPct(livePct), livePct > 0 ? color.lime : livePct < 0 ? color.red : color.white)
+    else
+        row(dash, 3, "Direction", "Flat", color.white)
+        row(dash, 4, "Fill price", "n/a", color.white)
+        row(dash, 5, "Stop / legs filled", "n/a", color.white)
+        row(dash, 6, "Open P&L (full size)", "n/a", color.white)
