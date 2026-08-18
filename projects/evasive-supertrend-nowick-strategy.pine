@@ -44,7 +44,8 @@ bool reentryInput     = input.bool(true, 'Re-enter After Stop-Out', group = TRAD
 string RISK_GROUP     = 'Risk (per unit)'
 string stopBasisInput = input.string('Wider of ATR and Band', 'Stop Basis', options = ['ATR', 'SuperTrend Band', 'Wider of ATR and Band'], group = RISK_GROUP, tooltip = 'A pure ATR stop of 2x sits inside a 3x band, so it fires before the trend is invalidated. Wider of ATR and Band never places the stop tighter than the band.')
 float slAtrInput      = input.float(2.0, 'Stop Loss (xATR)', minval = 0.1, step = 0.1, group = RISK_GROUP)
-float bandBufInput    = input.float(0.25, 'Band Stop Buffer (xATR)', minval = 0, step = 0.05, group = RISK_GROUP, tooltip = 'Pushes the band-based stop past the band so an intrabar touch does not pre-empt the close-based flip.')
+float bandBufInput    = input.float(0.25, 'Band Stop Buffer (xATR)', minval = 0, step = 0.05, group = RISK_GROUP, tooltip = 'Pushes the band-based stop past the band so an intrabar touch does not pre-empt the close-based flip. Applies to the no-wick add units.')
+float flipExtraBufInput = input.float(1.0, 'Flip Extra Backstop (xATR)', minval = 0, step = 0.1, group = RISK_GROUP, tooltip = 'Extra distance added beyond the stop above, for the flip/runner unit only. The flip is meant to exit on the SuperTrend actually reversing, not on ordinary noise, so it gets a wider catastrophic backstop instead of the tighter tactical stop the adds use.')
 float tpAtrInput      = input.float(3.0, 'Take Profit (xATR)', minval = 0.1, step = 0.1, group = RISK_GROUP, tooltip = 'Applies to no-wick units. The flip unit ignores it while Flip Unit Runs is on.')
 bool runnerInput      = input.bool(true, 'Flip Unit Runs (no fixed TP)', group = RISK_GROUP, tooltip = 'The flip entry carries the widest stop, so giving it the same target as the adds hands it the worst payoff of any unit. On: the flip unit holds until the SuperTrend flips or its stop is hit, and the adds harvest the swings around it. Off: it takes the fixed target like every other unit.')
 
@@ -136,6 +137,11 @@ float rawStopShort = stopBasisInput == 'ATR' ? atrStopShort : stopBasisInput == 
 float stopLong  = math.min(rawStopLong, close - syminfo.mintick)
 float stopShort = math.max(rawStopShort, close + syminfo.mintick)
 
+// Flip unit gets a wider, catastrophic-only stop: it should exit on the SuperTrend
+// reversing, not on the same noise the adds are sized to tolerate.
+float flipStopLong  = math.min(rawStopLong - atr * flipExtraBufInput, close - syminfo.mintick)
+float flipStopShort = math.max(rawStopShort + atr * flipExtraBufInput, close + syminfo.mintick)
+
 // na limit means no target order, so the flip unit exits only on its stop or the flip.
 float flipTpLong  = runnerInput ? na : close + tpDist
 float flipTpShort = runnerInput ? na : close - tpDist
@@ -169,13 +175,13 @@ if flipLong
     legOpened := true
     string idL = "L" + str.tostring(legId) + ".0"
     strategy.entry(idL, strategy.long, comment = "Flip L", alert_message = "LONG @ market | SuperTrend flip bull")
-    strategy.exit(idL + "x", from_entry = idL, stop = stopLong, limit = flipTpLong, comment_loss = "SL", comment_profit = "TP", alert_message = "CLOSE LONG unit " + idL)
+    strategy.exit(idL + "x", from_entry = idL, stop = flipStopLong, limit = flipTpLong, comment_loss = "SL", comment_profit = "TP", alert_message = "CLOSE LONG unit " + idL)
 
 if flipShort
     legOpened := true
     string idS = "S" + str.tostring(legId) + ".0"
     strategy.entry(idS, strategy.short, comment = "Flip S", alert_message = "SHORT @ market | SuperTrend flip bear")
-    strategy.exit(idS + "x", from_entry = idS, stop = stopShort, limit = flipTpShort, comment_loss = "SL", comment_profit = "TP", alert_message = "CLOSE SHORT unit " + idS)
+    strategy.exit(idS + "x", from_entry = idS, stop = flipStopShort, limit = flipTpShort, comment_loss = "SL", comment_profit = "TP", alert_message = "CLOSE SHORT unit " + idS)
 
 if addLong
     addsUsed += 1
