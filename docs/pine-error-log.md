@@ -107,6 +107,76 @@ plot(osc, "Oscillator", style=plot.style_area)
 hline(0, "Zero", linestyle=hline.style_dotted)   // stays in pane
 ```
 
+### Unbounded `line.new`/`label.new` silently killing tracked drawing references
+
+**Problem:** A script tracks its own drawing objects (e.g. `array<line>` per open
+position, so a stop/target line can be deleted later when the trade closes) while a
+*separate* feature elsewhere in the script also calls `line.new`/`label.new` every bar
+with no cap of its own (e.g. a decorative marker drawn on every signal bar, never
+deleted). Both features share the same script-wide `max_lines_count` /
+`max_labels_count` budget. Once that shared budget is exceeded, Pine auto-deletes the
+**oldest** object script-wide, which can be a still-tracked line from the first
+feature, not the unbounded one. The tracking array then holds a dangling reference, and
+calling `line.delete()`/`label.delete()` on it later (e.g. when the position closes)
+can error and take down the whole script intermittently, only once history is long
+enough to exhaust the budget, making it look like a random/rare failure rather than a
+reliable one.
+
+**Fix:** Any drawing objects created on a recurring, unbounded condition (once per
+signal bar, once per no-wick bar, etc.) must be tracked in their own array and pruned
+by the script itself, well under the declared max, so they can never crowd out
+longer-lived tracked objects sharing the same budget.
+
+```pinescript
+// ❌ WRONG — never deleted, competes for the shared 500-line budget forever
+if cond
+    line.new(bar_index, open, bar_index + 20, open)
+
+// ✅ CORRECT — self-bounded well under max_lines_count
+var array<line> markerLines = array.new<line>()
+if cond
+    array.push(markerLines, line.new(bar_index, open, bar_index + 20, open))
+    if array.size(markerLines) > 100
+        line.delete(array.shift(markerLines))
+```
+
+### Prefer reconciling against live state over diffing `strategy.closedtrades`
+
+**Problem:** Cleaning up a per-trade drawing (e.g. a stop/target line) by watching
+`strategy.closedtrades` grow and matching new entries by `entry_id` seems reliable, but
+it's an indirect signal: it assumes every close is observed exactly once, in order,
+with no gap. If that assumption is ever wrong for a reason specific to the strategy's
+own order flow (multiple simultaneous closes, a cancelled-not-filled order, any path
+that doesn't increment `strategy.closedtrades` the way expected), the tracked array
+entry is never removed and its line sits on the chart forever, `extend.right` carrying
+it across the whole rest of the chart.
+
+**Fix:** Reconcile the tracked array against `strategy.opentrades` directly (ground
+truth) instead of inferring closure from a diff. Guard with a small age check (skip
+anything recorded in the last bar or two) so a just-placed entry, which doesn't appear
+in `strategy.opentrades` until it fills on the following bar's open, isn't deleted
+before it ever opens.
+
+```pinescript
+// ❌ FRAGILE — assumes every close shows up exactly once in strategy.closedtrades
+if strategy.closedtrades > lastSeen
+    for i = lastSeen to strategy.closedtrades - 1
+        // ...remove by matching strategy.closedtrades.entry_id(i)...
+    lastSeen := strategy.closedtrades
+
+// ✅ ROBUST — checks the live open set every bar, self-heals regardless of cause
+for idx = array.size(trackedIds) - 1 to 0
+    if bar_index - array.get(trackedBarIdx, idx) > 1   // grace period for fill lag
+        string id = array.get(trackedIds, idx)
+        bool stillOpen = false
+        for j = 0 to strategy.opentrades - 1
+            if strategy.opentrades.entry_id(j) == id
+                stillOpen := true
+                break
+        if not stillOpen
+            // ...delete the drawing and array.remove(trackedIds, idx) etc...
+```
+
 **Gotcha:** a `table` will render in the script's home pane. With `overlay=false` that's
 the lower pane — pass `force_overlay=true` to `table.new(...)` if you need it on price.
 
