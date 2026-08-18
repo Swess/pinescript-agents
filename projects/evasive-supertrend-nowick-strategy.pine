@@ -58,6 +58,7 @@ bool showCompInput    = input.bool(true, 'Show Compensation Lines', group = VISU
 int compBarsInput     = input.int(20, 'Compensation Line Length (bars)', minval = 1, group = VISUAL_GROUP, tooltip = 'Horizontal extent of the orange open-price line. The original script used timeframe.multiplier here, which gives 1 bar on 1m and 1D but 240 bars on 4H. This is visual only under the current exit mode.')
 int compWidthInput    = input.int(1, 'Compensation Line Width (px)', minval = 1, maxval = 4, group = VISUAL_GROUP, tooltip = 'Pixel thickness only. Has no effect on any calculation or signal.')
 bool showCompTxtInput = input.bool(false, 'Label Compensation Lines', group = VISUAL_GROUP)
+bool showDashboardInput = input.bool(true, 'Show Position Dashboard', group = VISUAL_GROUP, tooltip = 'Top-left table listing every currently open unit: entry price, stop, target, and unrealized P&L.')
 
 //---------------------------------------------------------------------------------------------------------------------}
 // Core Calculations
@@ -113,6 +114,19 @@ bool tradeable = not na(atr) and bar_index > lengthInput
 var int legId     = 0
 var int addsUsed  = 0
 var bool legOpened = false
+
+// Position dashboard tracking: strategy.opentrades exposes entry price/size/profit per
+// open trade but has no getter for the stop/limit assigned to it, so record those
+// ourselves at entry time, keyed by entry id, and drop them once the trade closes.
+var array<string> posIds     = array.new<string>()
+var array<float>  posStops   = array.new<float>()
+var array<float>  posTps     = array.new<float>()
+var int           closedSeen = 0
+
+trackPosition(array<string> ids, array<float> stops, array<float> tps, string id, float stop, float tp) =>
+    array.push(ids, id)
+    array.push(stops, stop)
+    array.push(tps, tp)
 
 if trendChanged
     legId     += 1
@@ -176,12 +190,14 @@ if flipLong
     string idL = "L" + str.tostring(legId) + ".0"
     strategy.entry(idL, strategy.long, comment = "Flip L", alert_message = "LONG @ market | SuperTrend flip bull")
     strategy.exit(idL + "x", from_entry = idL, stop = flipStopLong, limit = flipTpLong, comment_loss = "SL", comment_profit = "TP", alert_message = "CLOSE LONG unit " + idL)
+    trackPosition(posIds, posStops, posTps, idL, flipStopLong, flipTpLong)
 
 if flipShort
     legOpened := true
     string idS = "S" + str.tostring(legId) + ".0"
     strategy.entry(idS, strategy.short, comment = "Flip S", alert_message = "SHORT @ market | SuperTrend flip bear")
     strategy.exit(idS + "x", from_entry = idS, stop = flipStopShort, limit = flipTpShort, comment_loss = "SL", comment_profit = "TP", alert_message = "CLOSE SHORT unit " + idS)
+    trackPosition(posIds, posStops, posTps, idS, flipStopShort, flipTpShort)
 
 if addLong
     addsUsed += 1
@@ -189,6 +205,7 @@ if addLong
     string kindL = posLong ? "Add L" : "Re-entry L"
     strategy.entry(idAL, strategy.long, comment = kindL + str.tostring(addsUsed), alert_message = "LONG @ market | no-wick unit " + str.tostring(addsUsed))
     strategy.exit(idAL + "x", from_entry = idAL, stop = stopLong, limit = close + tpDist, comment_loss = "SL", comment_profit = "TP", alert_message = "CLOSE LONG unit " + idAL)
+    trackPosition(posIds, posStops, posTps, idAL, stopLong, close + tpDist)
 
 if addShort
     addsUsed += 1
@@ -196,6 +213,7 @@ if addShort
     string kindS = posShort ? "Add S" : "Re-entry S"
     strategy.entry(idAS, strategy.short, comment = kindS + str.tostring(addsUsed), alert_message = "SHORT @ market | no-wick unit " + str.tostring(addsUsed))
     strategy.exit(idAS + "x", from_entry = idAS, stop = stopShort, limit = close - tpDist, comment_loss = "SL", comment_profit = "TP", alert_message = "CLOSE SHORT unit " + idAS)
+    trackPosition(posIds, posStops, posTps, idAS, stopShort, close - tpDist)
 
 //---------------------------------------------------------------------------------------------------------------------}
 // Visuals
@@ -234,5 +252,64 @@ if showLabelsInput and trendChanged
          textcolor = #FFFFFF,
          style     = trend == 1 ? label.style_label_up : label.style_label_down,
          size      = size.tiny)
+
+// Drop tracked stop/tp entries for trades that closed this bar. Matching against
+// strategy.closedtrades (rather than diffing against strategy.opentrades) avoids the
+// one-bar lag between placing an entry and it actually appearing as an open trade.
+if strategy.closedtrades > closedSeen
+    for i = closedSeen to strategy.closedtrades - 1
+        string cid = strategy.closedtrades.entry_id(i)
+        int idx = array.indexof(posIds, cid)
+        if idx >= 0
+            array.remove(posIds, idx)
+            array.remove(posStops, idx)
+            array.remove(posTps, idx)
+    closedSeen := strategy.closedtrades
+
+//---------------------------------------------------------------------------------------------------------------------}
+// Position Dashboard
+//---------------------------------------------------------------------------------------------------------------------{
+var table posTable = table.new(position.top_right, 7, 102, border_width = 1, border_color = color.gray, frame_color = color.gray, frame_width = 1)
+
+if showDashboardInput and barstate.islast
+    table.clear(posTable, 0, 0, 6, 101)
+    table.cell(posTable, 0, 0, "ID",    bgcolor = color.gray, text_color = color.white, text_size = size.small)
+    table.cell(posTable, 1, 0, "Side",  bgcolor = color.gray, text_color = color.white, text_size = size.small)
+    table.cell(posTable, 2, 0, "Entry", bgcolor = color.gray, text_color = color.white, text_size = size.small)
+    table.cell(posTable, 3, 0, "SL",    bgcolor = color.gray, text_color = color.white, text_size = size.small)
+    table.cell(posTable, 4, 0, "TP",    bgcolor = color.gray, text_color = color.white, text_size = size.small)
+    table.cell(posTable, 5, 0, "P&L",   bgcolor = color.gray, text_color = color.white, text_size = size.small)
+    table.cell(posTable, 6, 0, "P&L %", bgcolor = color.gray, text_color = color.white, text_size = size.small)
+
+    float totalPnl   = 0.0
+    int   openCount  = strategy.opentrades
+    for i = 0 to openCount - 1
+        string tid   = strategy.opentrades.entry_id(i)
+        float eprice = strategy.opentrades.entry_price(i)
+        float qty    = strategy.opentrades.size(i)
+        float pnl    = strategy.opentrades.profit(i)
+        totalPnl    += pnl
+
+        int idx      = array.indexof(posIds, tid)
+        float stopP  = idx >= 0 ? array.get(posStops, idx) : na
+        float tpP    = idx >= 0 ? array.get(posTps, idx)   : na
+        float pnlPct = eprice != 0 and qty != 0 ? pnl / (eprice * math.abs(qty)) * 100 : na
+        color side   = qty > 0 ? BULL_COLOR : BEAR_COLOR
+        color pnlClr = pnl > 0 ? BULL_COLOR : pnl < 0 ? BEAR_COLOR : color.gray
+
+        color rowBg = color.new(color.black, 15)
+        table.cell(posTable, 0, i + 1, tid, bgcolor = rowBg, text_color = color.white, text_size = size.tiny)
+        table.cell(posTable, 1, i + 1, qty > 0 ? "LONG" : "SHORT", bgcolor = rowBg, text_color = side, text_size = size.tiny)
+        table.cell(posTable, 2, i + 1, str.tostring(eprice, format.mintick), bgcolor = rowBg, text_color = color.white, text_size = size.tiny)
+        table.cell(posTable, 3, i + 1, na(stopP) ? "-" : str.tostring(stopP, format.mintick), bgcolor = rowBg, text_color = color.white, text_size = size.tiny)
+        table.cell(posTable, 4, i + 1, na(tpP) ? "-" : str.tostring(tpP, format.mintick), bgcolor = rowBg, text_color = color.white, text_size = size.tiny)
+        table.cell(posTable, 5, i + 1, str.tostring(pnl, "#,##0.00"), bgcolor = rowBg, text_color = pnlClr, text_size = size.tiny)
+        table.cell(posTable, 6, i + 1, na(pnlPct) ? "-" : str.tostring(pnlPct, "#.##") + "%", bgcolor = rowBg, text_color = pnlClr, text_size = size.tiny)
+
+    if openCount > 0
+        color totalBg = color.new(color.gray, 70)
+        table.cell(posTable, 0, openCount + 1, "TOTAL", bgcolor = totalBg, text_color = color.white, text_size = size.tiny)
+        table.merge_cells(posTable, 0, openCount + 1, 4, openCount + 1)
+        table.cell(posTable, 5, openCount + 1, str.tostring(totalPnl, "#,##0.00"), bgcolor = totalBg, text_color = totalPnl >= 0 ? BULL_COLOR : BEAR_COLOR, text_size = size.tiny)
 
 //---------------------------------------------------------------------------------------------------------------------}
