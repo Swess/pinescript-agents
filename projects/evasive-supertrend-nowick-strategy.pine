@@ -41,6 +41,10 @@ bool useNoWickInput   = input.bool(true, 'Enable No-Wick Adds', group = TRADE_GR
 string addLocInput    = input.string('Pullback (near band)', 'Add Location Filter', options = ['Any', 'Pullback (near band)', 'Extension (away from band)'], group = TRADE_GROUP, tooltip = 'isNoisy is true when close sits within the noise threshold of the band, which in a trend is a pullback to support. Pullback requires isNoisy, Extension requires not isNoisy, Any ignores it. Extension reproduces the original build.')
 bool reentryInput     = input.bool(true, 'Re-enter After Stop-Out', group = TRADE_GROUP, tooltip = 'Lets a matching no-wick bar re-open a leg that was fully stopped out while the SuperTrend has not yet flipped. Off leaves the leg dead until the next flip.')
 
+string SESSION_GROUP  = 'Session Filter'
+bool useSessionInput  = input.bool(false, 'Restrict Entries to Regular Session', group = SESSION_GROUP, tooltip = 'When on, new flip and no-wick entries are only taken inside the session below. Existing stop/target orders keep working regardless. Off (default) trades every bar, use this for 24h markets like forex.')
+string sessionInput   = input.session('0930-1600', 'Regular Session', group = SESSION_GROUP, tooltip = 'Format HHMM-HHMM, uses the symbol\'s exchange timezone. Default is US equity regular hours.')
+
 string RISK_GROUP     = 'Risk (per unit)'
 string stopBasisInput = input.string('Wider of ATR and Band', 'Stop Basis', options = ['ATR', 'SuperTrend Band', 'Wider of ATR and Band'], group = RISK_GROUP, tooltip = 'A pure ATR stop of 2x sits inside a 3x band, so it fires before the trend is invalidated. Wider of ATR and Band never places the stop tighter than the band.')
 float slAtrInput      = input.float(2.0, 'Stop Loss (xATR)', minval = 0.1, step = 0.1, group = RISK_GROUP)
@@ -111,6 +115,7 @@ bool drawBearWick = bearNoWick and (not trendOnlyInput or trend == -1)
 // Signals
 //---------------------------------------------------------------------------------------------------------------------{
 bool tradeable = not na(atr) and bar_index > lengthInput
+bool sessionOk = not useSessionInput or not na(time(timeframe.period, sessionInput))
 
 var int legId     = 0
 var int addsUsed  = 0
@@ -168,8 +173,8 @@ float flipStopShort = math.max(rawStopShort + atr * flipExtraBufInput, close + s
 float flipTpLong  = runnerInput ? na : close + tpDist
 float flipTpShort = runnerInput ? na : close - tpDist
 
-bool flipLong  = tradeable and trendChanged and trend ==  1 and allowLongInput
-bool flipShort = tradeable and trendChanged and trend == -1 and allowShortInput
+bool flipLong  = tradeable and trendChanged and trend ==  1 and allowLongInput and sessionOk
+bool flipShort = tradeable and trendChanged and trend == -1 and allowShortInput and sessionOk
 
 // isNoisy means close is within the noise threshold of the band, which in a trend is a
 // pullback to support rather than chop. Extension reproduces the original filter.
@@ -181,8 +186,8 @@ bool posLong  = strategy.position_size > 0
 bool posShort = strategy.position_size < 0
 bool flatLeg  = reentryInput and legOpened and strategy.position_size == 0
 
-bool addLong  = useNoWickInput and tradeable and not trendChanged and trend ==  1 and allowLongInput and bullNoWick and locOk and (posLong or flatLeg)
-bool addShort = useNoWickInput and tradeable and not trendChanged and trend == -1 and allowShortInput and bearNoWick and locOk and (posShort or flatLeg)
+bool addLong  = useNoWickInput and tradeable and not trendChanged and trend ==  1 and allowLongInput and bullNoWick and locOk and sessionOk and (posLong or flatLeg)
+bool addShort = useNoWickInput and tradeable and not trendChanged and trend == -1 and allowShortInput and bearNoWick and locOk and sessionOk and (posShort or flatLeg)
 
 //---------------------------------------------------------------------------------------------------------------------}
 // Orders
