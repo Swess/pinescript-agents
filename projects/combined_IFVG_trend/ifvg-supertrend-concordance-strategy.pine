@@ -1,0 +1,262 @@
+// Combines LuxAlgo Inversion FVG (retest entries) with Supertrend MTF Heikin Ashi (trend concordance filter + trailing stop)
+//@version=6
+strategy("IFVG + Supertrend MTF Concordance Strategy", shorttitle = "IFVG-ST Concordance", overlay = true, max_boxes_count = 500, max_lines_count = 500, max_labels_count = 500, initial_capital = 10000, default_qty_type = strategy.percent_of_equity, default_qty_value = 100, pyramiding = 0)
+//@strategy_alert_message {{strategy.order.alert_message}}
+
+//---------------------------------------------------------------------------------------------------------------------}
+//IFVG Settings
+//---------------------------------------------------------------------------------------------------------------------{
+dispNum = input.int(5, maxval = 100, minval = 1, title = "Show Last", tooltip = "Amount of most recent inversion FVGs to display in Bullish/Bearish pairs.", group = "IFVG Settings")
+signalPref = input.string("Close", title = "Signal Preference", options = ["Close", "Wick"], tooltip = "Base retest signals on Wicks or Close Price.", group = "IFVG Settings")
+useWick = signalPref == "Wick"
+atrMulti = input.float(0.25, step = 0.25, minval = 0, title = "ATR Multiplier", tooltip = "Only display/trade inversions with width greater than ATR*Multiplier.", group = "IFVG Settings")
+
+bullColor = input.color(color.new(#089981, 80), title = "Bull Color", group = "IFVG Colors")
+bearColor = input.color(color.new(#f23645, 80), title = "Bear Color", group = "IFVG Colors")
+midColor = input.color(#787b86, title = "Midline Color", group = "IFVG Colors")
+invis = color.rgb(0, 0, 0, 100)
+
+//---------------------------------------------------------------------------------------------------------------------}
+//Supertrend Settings
+//---------------------------------------------------------------------------------------------------------------------{
+stMult = input.float(2.0, title = "ATR Factor", minval = 0.5, maxval = 100, step = 0.1, group = "Supertrend Settings")
+stPeriod = input.int(7, title = "ATR Period", minval = 1, maxval = 100, group = "Supertrend Settings")
+htfMode = input.string("Auto", title = "HTF Method", options = ["Auto", "User Defined"], group = "Supertrend Settings")
+htfManual = input.timeframe("5", title = "Time Frame (if HTF Method=User Defined)", group = "Supertrend Settings")
+
+//---------------------------------------------------------------------------------------------------------------------}
+//UDTs
+//---------------------------------------------------------------------------------------------------------------------{
+type lab
+    int x
+    float y
+    int dir
+
+type fvg
+    int left = na
+    float top = na
+    int right = na
+    float bot = na
+    float mid = na
+    int dir = na
+    int state = na
+    array<lab> labs = na
+    int xVal = na
+
+//---------------------------------------------------------------------------------------------------------------------}
+//IFVG Functions
+//---------------------------------------------------------------------------------------------------------------------{
+buffer = 100
+cTop = math.max(open, close)
+cBot = math.min(open, close)
+
+labelMaker(_x, _y, _dir) =>
+    switch
+        _dir == 1 => label.new(_x, _y, "\n▲", style = label.style_text_outline, color = invis, textcolor = color.new(bullColor, 0), size = size.small, xloc = xloc.bar_time)
+        _dir == -1 => label.new(_x, _y, "▼\n", style = label.style_text_outline, color = invis, textcolor = color.new(bearColor, 0), size = size.small, xloc = xloc.bar_time)
+
+fvgManage(_ary, _invAry) =>
+    if _ary.size() >= buffer
+        _ary.shift()
+    if _ary.size() > 0
+        for i = _ary.size() - 1 to 0
+            value = _ary.get(i)
+            _dir = value.dir
+            if _dir == 1 and (cBot < value.bot)
+                value.xVal := time
+                _invAry.push(_ary.remove(i))
+            if _dir == -1 and (cTop > value.top)
+                value.xVal := time
+                _invAry.push(_ary.remove(i))
+
+invManage(_ary) =>
+    fire = false
+    if _ary.size() >= buffer
+        _ary.shift()
+    if _ary.size() > 0
+        for i = _ary.size() - 1 to 0
+            value = _ary.get(i)
+            bxTop = value.top
+            bxBot = value.bot
+            _dir = value.dir
+            st = value.state
+            if st == 0 and _dir == 1
+                value.state := 1
+                value.dir := -1
+            if _dir == -1 and st == 0
+                value.state := 1
+                value.dir := 1
+            if st >= 1
+                value.right := time
+            if _dir == -1 and st == 1 and close < bxBot and (useWick ? high[1] : close[1]) >= bxBot and (useWick ? high[1] : close[1]) < bxTop
+                value.labs.push(lab.new(time, bxTop, -1))
+                fire := true
+            if _dir == 1 and st == 1 and close > bxTop and (useWick ? low[1] : close[1]) <= bxTop and (useWick ? low[1] : close[1]) > bxBot
+                value.labs.push(lab.new(time, bxBot, 1))
+                fire := true
+            if st >= 1 and ((_dir == -1 and cTop > bxTop) or (_dir == 1 and cBot < bxBot))
+                _ary.remove(i)
+    fire
+
+sendIt(_ary) =>
+    lastIndex = _ary.size() - 1
+    for [index, value] in _ary
+        bxTop = value.top
+        bxBot = value.bot
+        bxLeft = value.left
+        xval = value.xVal
+        mid = value.mid
+        col = value.dir == -1 ? bullColor : bearColor
+        oCol = value.dir == -1 ? bearColor : bullColor
+        if index > lastIndex - dispNum
+            box.new(bxLeft, bxTop, xval, bxBot, bgcolor = col, border_color = invis, xloc = xloc.bar_time)
+            box.new(xval, bxTop, time, bxBot, bgcolor = oCol, border_color = invis, xloc = xloc.bar_time)
+            line.new(bxLeft, mid, time, mid, color = midColor, style = line.style_dashed, xloc = xloc.bar_time)
+            box.new(bar_index, bxTop, bar_index + 50, bxBot, bgcolor = oCol, border_color = invis)
+            line.new(bar_index, mid, bar_index + 50, mid, color = midColor, style = line.style_dashed)
+            for stuff in value.labs
+                labelMaker(stuff.x, stuff.y, stuff.dir)
+
+//---------------------------------------------------------------------------------------------------------------------}
+//Delete Drawings (redrawn only on the last bar via sendIt)
+//---------------------------------------------------------------------------------------------------------------------{
+for boxes in box.all
+    box.delete(boxes)
+for lines in line.all
+    line.delete(lines)
+for labels in label.all
+    label.delete(labels)
+
+//---------------------------------------------------------------------------------------------------------------------}
+//IFVG Data + Detection
+//---------------------------------------------------------------------------------------------------------------------{
+var bullFvgAry = array.new<fvg>(na)
+var bearFvgAry = array.new<fvg>(na)
+var bullInvAry = array.new<fvg>(na)
+var bearInvAry = array.new<fvg>(na)
+
+ifvgAtr = nz(ta.atr(200) * atrMulti, ta.cum(high - low) / (bar_index + 1))
+fvgUp = (low > high[2]) and (close[1] > high[2])
+fvgDown = (high < low[2]) and (close[1] < low[2])
+
+if fvgUp and math.abs(low - high[2]) > ifvgAtr
+    bullFvgAry.push(fvg.new(time[1], low, time, high[2], math.avg(low, high[2]), 1, 0, array.new<lab>(na), na))
+if fvgDown and math.abs(low[2] - high) > ifvgAtr
+    bearFvgAry.push(fvg.new(time[1], low[2], time, high, math.avg(high, low[2]), -1, 0, array.new<lab>(na), na))
+
+fvgManage(bullFvgAry, bullInvAry)
+fvgManage(bearFvgAry, bearInvAry)
+
+// An inverted bearish FVG that gets retested/held = bullish signal, and vice versa
+bearSignal = invManage(bullInvAry)
+bullSignal = invManage(bearInvAry)
+
+if barstate.islast
+    sendIt(bullInvAry)
+    sendIt(bearInvAry)
+
+//---------------------------------------------------------------------------------------------------------------------}
+//Supertrend (Current TF, Heikin Ashi)
+//---------------------------------------------------------------------------------------------------------------------{
+haTicker = ticker.heikinashi(syminfo.tickerid)
+
+haHigh = request.security(haTicker, timeframe.period, high, lookahead = barmerge.lookahead_off)
+haLow = request.security(haTicker, timeframe.period, low, lookahead = barmerge.lookahead_off)
+haClose = request.security(haTicker, timeframe.period, close, lookahead = barmerge.lookahead_off)
+haAtr = request.security(haTicker, timeframe.period, ta.atr(stPeriod), lookahead = barmerge.lookahead_off)
+
+up = (haHigh + haLow) / 2 - (stMult * haAtr)
+dn = (haHigh + haLow) / 2 + (stMult * haAtr)
+
+var float tUp = na
+var float tDown = na
+var int trend = 1
+
+tUp := haClose[1] > tUp[1] ? math.max(up, tUp[1]) : up
+tDown := haClose[1] < tDown[1] ? math.min(dn, tDown[1]) : dn
+trend := haClose > tDown[1] ? 1 : haClose < tUp[1] ? -1 : nz(trend[1], 1)
+trailingSl = trend == 1 ? tUp : tDown
+
+//---------------------------------------------------------------------------------------------------------------------}
+//Supertrend (Higher TF, Heikin Ashi)
+//lookahead_on + [1] offsets = confirmed-HTF-bar values available at the open of the new bar, without repainting
+//---------------------------------------------------------------------------------------------------------------------{
+htfAuto = switch timeframe.period
+    "1" => "5"
+    "3" => "15"
+    "5" => "15"
+    "15" => "60"
+    "30" => "120"
+    "45" => "120"
+    "60" => "240"
+    "120" => "240"
+    "180" => "240"
+    "240" => "D"
+    "D" => "W"
+    "W" => "5W"
+    => "D"
+htf = htfMode == "Auto" ? htfAuto : htfManual
+
+highHtf = request.security(haTicker, htf, high[1], lookahead = barmerge.lookahead_on)
+lowHtf = request.security(haTicker, htf, low[1], lookahead = barmerge.lookahead_on)
+closeHtf = request.security(haTicker, htf, close[1], lookahead = barmerge.lookahead_on)
+atrHtf = request.security(haTicker, htf, ta.atr(stPeriod)[1], lookahead = barmerge.lookahead_on)
+
+upHtf = math.abs(highHtf + lowHtf) / 2 - (stMult * atrHtf)
+dnHtf = math.abs(highHtf + lowHtf) / 2 + (stMult * atrHtf)
+
+var float tUpHtf = na
+var float tDownHtf = na
+var int trendHtf = 1
+
+tUpHtf := closeHtf[1] > tUpHtf[1] ? math.max(upHtf, tUpHtf[1]) : upHtf
+tDownHtf := closeHtf[1] < tDownHtf[1] ? math.min(dnHtf, tDownHtf[1]) : dnHtf
+trendHtf := closeHtf > tDownHtf[1] ? 1 : closeHtf < tUpHtf[1] ? -1 : nz(trendHtf[1], 1)
+trailingSlHtf = trendHtf == 1 ? tUpHtf : tDownHtf
+
+plot(trailingSl, title = "Supertrend (Current TF)", color = trend == 1 ? color.lime : color.red, linewidth = 2)
+plot(trailingSlHtf, title = "Supertrend (HTF)", color = trendHtf == 1 ? color.blue : color.red, linewidth = 3)
+
+//---------------------------------------------------------------------------------------------------------------------}
+//Trend Concordance + Entry Regime Tracking
+//A "regime" = a run of continuous agreement between current-TF and HTF trend; only the first IFVG retest per regime is traded
+//---------------------------------------------------------------------------------------------------------------------{
+concordantDir = trend == 1 and trendHtf == 1 ? 1 : trend == -1 and trendHtf == -1 ? -1 : 0
+
+var int prevConcordantDir = 0
+var bool entryTakenThisRegime = false
+
+if concordantDir != prevConcordantDir
+    entryTakenThisRegime := false
+prevConcordantDir := concordantDir
+
+longEntrySignal = concordantDir == 1 and bullSignal and not entryTakenThisRegime
+shortEntrySignal = concordantDir == -1 and bearSignal and not entryTakenThisRegime
+
+//---------------------------------------------------------------------------------------------------------------------}
+//Strategy Orders
+//---------------------------------------------------------------------------------------------------------------------{
+if longEntrySignal
+    strategy.entry("Long", strategy.long)
+    entryTakenThisRegime := true
+
+if shortEntrySignal
+    strategy.entry("Short", strategy.short)
+    entryTakenThisRegime := true
+
+if strategy.position_size > 0
+    strategy.exit("Long Exit", "Long", stop = trailingSl)
+if strategy.position_size < 0
+    strategy.exit("Short Exit", "Short", stop = trailingSl)
+
+//---------------------------------------------------------------------------------------------------------------------}
+//Alerts
+//---------------------------------------------------------------------------------------------------------------------{
+alertcondition(bullSignal, "IFVG Bullish Retest")
+alertcondition(bearSignal, "IFVG Bearish Retest")
+alertcondition(longEntrySignal, "Long Entry (Concordant Trend + IFVG Retest)")
+alertcondition(shortEntrySignal, "Short Entry (Concordant Trend + IFVG Retest)")
+alertcondition(trend == 1 and trend[1] == -1, "Supertrend Current TF Trend Up")
+alertcondition(trend == -1 and trend[1] == 1, "Supertrend Current TF Trend Down")
+alertcondition(trendHtf == 1 and trendHtf[1] == -1, "Supertrend HTF Trend Up")
+alertcondition(trendHtf == -1 and trendHtf[1] == 1, "Supertrend HTF Trend Down")

@@ -72,6 +72,25 @@ strategy("My Strategy", overlay=true)
 
 ---
 
+### CE10120 — `strategy()`/`indicator()` argument casing: `shorttitle`, not `shortTitle`
+
+**Seen:** `The "strategy" function does not have an argument with the name "shortTitle"`
+
+**Why:** Pine's built-in function parameters are lowercase, not camelCase. It's
+`shorttitle`, matching `overlay`, `pyramiding`, `calc_on_order_fills`, etc. — only
+user-defined variables/functions get camelCase freely; built-in argument names must
+match the reference exactly.
+
+```pinescript
+// ❌ WRONG — CE10120
+strategy("My Strategy", shortTitle = "MS", overlay = true)
+
+// ✅ CORRECT
+strategy("My Strategy", shorttitle = "MS", overlay = true)
+```
+
+---
+
 ## Techniques
 
 ### Combining a chart-overlay indicator + a pane oscillator in ONE script
@@ -376,5 +395,35 @@ in `©`/`™`/em-dash/emoji.
 
 ---
 
-_Last updated: 2026-08-17 - added pyramiding/per-unit-bracket rules and the
-`timeframe.multiplier` drawing-extent note from the Evasive SuperTrend + No-Wick build._
+---
+
+### CE10088 "Cannot modify global variable ... in function" for label/line/box vars
+
+**Seen:** a plain global `var label myLabel = na`, reassigned inside a user-defined
+function with `myLabel := label.new(...)` after deleting the previous one, failed to
+compile with CE10088.
+
+**Why:** functions can never rebind a global variable's identifier via `:=`, only
+mutate the object a global variable already refers to (field reassignment, array/box/
+line/label setter methods). A bare `label`/`line`/`box` global is a direct binding, so
+reassigning it from inside a function is exactly the disallowed case.
+
+**Fix:** wrap the drawing handle(s) in a small UDT and reassign a *field* of it instead
+— the same pattern the LuxAlgo `zone` type already uses for `currentZone.b_ox := box.new(...)`:
+```pinescript
+type fastMark
+    label   e_ntryLabel  = na
+    line    t_argetLine  = na
+
+var fastMark currentFastMark = fastMark.new()
+
+f() =>
+    currentFastMark.e_ntryLabel.delete()
+    currentFastMark.e_ntryLabel := label.new(...)   // OK: mutating a field, not the global identifier
+```
+
+---
+
+_Last updated: 2026-08-20 - added the CE10088 global-var-in-function fix (wrap drawing
+handles in a UDT field instead of reassigning a bare global) from the RPZL fast-entry
+strategy build._

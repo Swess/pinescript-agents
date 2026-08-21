@@ -102,8 +102,7 @@ get_momentum_state(rsi_val, stoch_val, threshold) =>
 
 // Get multi-timeframe data
 get_mtf_data(tf, ma_len, rsi_len, stoch_k_len, stoch_d_len) =>
-    [ma_val, ma_prev, rsi_val, stoch_k_val, stoch_d_val, close_val, atr_val] = 
-        request.security(syminfo.tickerid, tf, 
+    [ma_val, ma_prev, rsi_val, stoch_k_val, stoch_d_val, close_val, atr_val] = request.security(syminfo.tickerid, tf,
             [get_ma(close, ma_len, ma_type), get_ma(close[1], ma_len, ma_type),
              ta.rsi(close, rsi_len), ta.stoch(close, high, low, stoch_k_len),
              ta.sma(ta.stoch(close, high, low, stoch_k_len), stoch_d_len),
@@ -162,24 +161,22 @@ analyze_market() =>
 
 // Check for divergences
 check_divergences() =>
-    if not show_divergences
-        return
-    
-    // Simplified divergence detection
-    // Compare price action vs momentum across timeframes
-    
-    price_higher = close > close[5]
-    rsi_current = ta.rsi(close, rsi_length)
-    rsi_previous = ta.rsi(close[5], rsi_length)
-    
-    // Bullish divergence: price lower, momentum higher
-    bullish_div = close < close[5] and rsi_current > rsi_previous and rsi_current < 40
-    
-    // Bearish divergence: price higher, momentum lower
-    bearish_div = close > close[5] and rsi_current < rsi_previous and rsi_current > 60
-    
-    current_analysis.has_bullish_divergence := bullish_div
-    current_analysis.has_bearish_divergence := bearish_div
+    if show_divergences
+        // Simplified divergence detection
+        // Compare price action vs momentum across timeframes
+
+        price_higher = close > close[5]
+        rsi_current = ta.rsi(close, rsi_length)
+        rsi_previous = ta.rsi(close[5], rsi_length)
+
+        // Bullish divergence: price lower, momentum higher
+        bullish_div = close < close[5] and rsi_current > rsi_previous and rsi_current < 40
+
+        // Bearish divergence: price higher, momentum lower
+        bearish_div = close > close[5] and rsi_current < rsi_previous and rsi_current > 60
+
+        current_analysis.has_bullish_divergence := bullish_div
+        current_analysis.has_bearish_divergence := bearish_div
 
 // Generate trading signal
 generate_signal() =>
@@ -247,28 +244,27 @@ generate_signal() =>
 
 // Draw signal on chart
 draw_signal() =>
-    if not show_signals or current_signal.signal_type == "WAIT"
-        return
-    
-    signal_color = current_signal.signal_type == "BUY" ? color.green : color.red
-    signal_text = current_signal.signal_type + "\n" + str.tostring(current_signal.strength * 100, "#") + "%"
-    
-    signal_label = label.new(bar_index, current_signal.signal_type == "BUY" ? low : high,
-                            text=signal_text, color=signal_color, textcolor=color.white,
-                            size=size.normal, style=current_signal.signal_type == "BUY" ? 
-                            label.style_label_up : label.style_label_down)
-    
-    array.push(signal_labels, signal_label)
-    
-    // Clean old labels
-    if array.size(signal_labels) > 5
-        old_label = array.shift(signal_labels)
-        label.delete(old_label)
+    if show_signals and current_signal.signal_type != "WAIT"
+        signal_color = current_signal.signal_type == "BUY" ? color.green : color.red
+        signal_text = current_signal.signal_type + "\n" + str.tostring(current_signal.strength * 100, "#") + "%"
+
+        signal_label = label.new(bar_index, current_signal.signal_type == "BUY" ? low : high,
+                                text=signal_text, color=signal_color, textcolor=color.white,
+                                size=size.normal, style=current_signal.signal_type == "BUY" ?
+                                label.style_label_up : label.style_label_down)
+
+        array.push(signal_labels, signal_label)
+
+        // Clean old labels
+        if array.size(signal_labels) > 5
+            old_label = array.shift(signal_labels)
+            label.delete(old_label)
 
 // === MAIN LOGIC ===
+analyze_market()
+check_divergences()
+
 if barstate.isconfirmed
-    analyze_market()
-    check_divergences()
     generate_signal()
     draw_signal()
 
